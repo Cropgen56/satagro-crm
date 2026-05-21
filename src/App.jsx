@@ -17,6 +17,8 @@ import TaskDetailPage from '@/pages/TaskDetailPage'
 import TasksPage from '@/pages/TasksPage'
 import LoginPage from '@/pages/LoginPage'
 import OtpPage from '@/pages/OtpPage'
+import SubscriptionPage from '@/pages/SubscriptionPage'
+import AdvisoryPage from '@/pages/AdvisoryPage'
 
 export default function App() {
   return (
@@ -39,8 +41,8 @@ export default function App() {
         <Route path="/tasks" element={<TasksPage />} />
         <Route path="/tasks/create" element={<CreateTaskPage />} />
         <Route path="/tasks/:id" element={<TaskDetailPage />} />
-        <Route path="/subscriptions" element={<EmptyPage title="Subscriptions" />} />
-        <Route path="/advisories" element={<EmptyPage title="Advisories" />} />
+        <Route path="/subscriptions" element={<SubscriptionPage/>} />
+        <Route path="/advisories" element={<AdvisoryPage />} />
         <Route path="/notifications" element={<EmptyPage title="Notifications" />} />
         <Route path="/reports" element={<EmptyPage title="Reports" />} />
         <Route path="/user-management" element={<EmptyPage title="User Management" />} />

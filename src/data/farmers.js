@@ -1,0 +1,67 @@
+export const farmersData = [
+  {
+    id: 'FRM-8921',
+    name: 'Amit Patel',
+    phone: '+91 98765 43210',
+    location: 'Anand, Gujarat',
+    landSize: '12 Acres',
+    crop: 'Cotton',
+    agent: { name: 'Suresh Kumar', initials: 'S', color: 'bg-teal-100 text-teal-700' },
+    status: 'active',
+    lastAdvisory: '2 days ago',
+    avatar:
+      'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=80&h=80&fit=crop&crop=face',
+  },
+  {
+    id: 'FRM-7742',
+    name: 'Harpreet Singh',
+    phone: '+91 98123 45678',
+    location: 'Ludhiana, Punjab',
+    landSize: '8 Acres',
+    crop: 'Wheat',
+    agent: { name: 'Arjun Sharma', initials: 'A', color: 'bg-blue-100 text-blue-700' },
+    status: 'expiring',
+    lastAdvisory: '5 days ago',
+    avatar:
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&crop=face',
+  },
+  {
+    id: 'FRM-6533',
+    name: 'Lakshmi Devi',
+    phone: '+91 87654 32109',
+    location: 'Nizamabad, Telangana',
+    landSize: '15 Acres',
+    crop: 'Chilli',
+    agent: { name: 'Priya Patel', initials: 'P', color: 'bg-purple-100 text-purple-700' },
+    status: 'active',
+    lastAdvisory: '1 day ago',
+    avatar:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&crop=face',
+  },
+  {
+    id: 'FRM-5410',
+    name: 'Rajesh Yadav',
+    phone: '+91 91234 56789',
+    location: 'Meerut, Uttar Pradesh',
+    landSize: '20 Acres',
+    crop: 'Sugarcane',
+    agent: { name: 'Rahul Verma', initials: 'R', color: 'bg-orange-100 text-orange-700' },
+    status: 'expired',
+    lastAdvisory: '12 days ago',
+    avatar:
+      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&crop=face',
+  },
+  {
+    id: 'FRM-4298',
+    name: 'Kavitha Reddy',
+    phone: '+91 99887 76655',
+    location: 'Kurnool, Andhra Pradesh',
+    landSize: '6 Acres',
+    crop: 'Groundnut',
+    agent: { name: 'Sneha Gupta', initials: 'S', color: 'bg-pink-100 text-pink-700' },
+    status: 'trial',
+    lastAdvisory: '3 days ago',
+    avatar:
+      'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&crop=face',
+  },
+]

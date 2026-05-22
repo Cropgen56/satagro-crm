@@ -20,6 +20,7 @@ import OtpPage from '@/pages/OtpPage'
 import SubscriptionPage from '@/pages/SubscriptionPage'
 import AdvisoryPage from '@/pages/AdvisoryPage'
 import Notificationspage from '@/pages/Notificationspage'
+import Reportpage from '@/pages/Reportpage'
 
 export default function App() {
   return (
@@ -45,7 +46,7 @@ export default function App() {
         <Route path="/subscriptions" element={<SubscriptionPage/>} />
         <Route path="/advisories" element={<AdvisoryPage />} />
         <Route path="/notifications" element={<Notificationspage />} />
-        <Route path="/reports" element={<EmptyPage title="Reports" />} />
+        <Route path="/reports" element={<Reportpage />} />
         <Route path="/user-management" element={<EmptyPage title="User Management" />} />
         <Route path="/settings" element={<EmptyPage title="Settings" />} />
       </Route>

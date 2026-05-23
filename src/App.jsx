@@ -22,6 +22,7 @@ import AdvisoryPage from '@/pages/AdvisoryPage'
 import Notificationspage from '@/pages/Notificationspage'
 import Reportpage from '@/pages/Reportpage'
 import ProfilePage from '@/pages/ProfilePage'
+import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
   return (
@@ -57,7 +58,7 @@ export default function App() {
 
         <Route
           path="/settings"
-          element={<EmptyPage title="Settings" />}
+          element={<SettingsPage/>}
         />
       </Route>
 

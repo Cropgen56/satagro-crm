@@ -1,5 +1,5 @@
 import { Pencil } from 'lucide-react'
-import { cropOptions, fieldAgents, subscriptionPlans } from '@/data/addFarmer'
+import { cropOptions, fieldAgents, subscriptionPlans } from '@/lib/moduleConstants'
 
 function ReviewCard({ title, onEdit, children }) {
   return (

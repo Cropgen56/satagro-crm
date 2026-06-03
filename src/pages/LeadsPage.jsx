@@ -1,8 +1,7 @@
 import PageTopBar from '@/components/layout/PageTopBar'
-import LeadKpiCard from '@/components/leads/LeadKpiCard'
 import LeadsPageHeader from '@/components/leads/LeadsPageHeader'
-import LeadsTable from '@/components/leads/LeadsTable'
-import { leadsData, leadsKpis } from '@/data/leads'
+import EmptyState from '@/components/ui/EmptyState'
+import { Target } from 'lucide-react'
 
 export default function LeadsPage() {
   return (
@@ -11,14 +10,13 @@ export default function LeadsPage() {
       <div className="mt-8">
         <LeadsPageHeader />
       </div>
-
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {leadsKpis.map((kpi) => (
-          <LeadKpiCard key={kpi.label} {...kpi} />
-        ))}
+      <div className="mt-8">
+        <EmptyState
+          icon={Target}
+          title="No leads yet"
+          description="Lead pipeline data will appear here once connected to your CRM backend."
+        />
       </div>
-
-      <LeadsTable leads={leadsData} />
     </div>
   )
 }

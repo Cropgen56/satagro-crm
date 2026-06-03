@@ -25,10 +25,13 @@ React + Vite + JavaScript admin dashboard for SatAgro, styled with Tailwind CSS.
 ```bash
 nvm use 20   # Node 20+ recommended
 npm install
+cp .env.example .env
 npm run dev
 ```
 
 Open [http://localhost:5173](http://localhost:5173).
+
+The admin UI talks to **cropgen-server** BioDrops auth + CRM routes (`/v1/api/auth/biodrops/*`, `/v1/api/auth/crm/*`). Start the server locally (default port `7070`) and set `VITE_API_BASE_URL` in `.env` if needed.
 
 ## Scripts
 

@@ -1,151 +1,171 @@
-import { ChevronLeft, ChevronRight, Eye, MoreHorizontal, Pencil } from 'lucide-react'
+import clsx from 'clsx'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { ChevronLeft, ChevronRight, Eye } from 'lucide-react'
+import { UserAvatar } from '@/components/ui/EmptyState'
 import FarmersFilterBar from './FarmersFilterBar'
 import StatusBadge from './StatusBadge'
 
 const columns = [
   'Farmer',
-  'Mobile Number',
+  'Mobile',
   'Location',
-  'Land Size',
+  'Land',
   'Crop',
-  'Assigned Agent',
   'Status',
-  'Last Advisory',
-  'Actions',
+  'Last active',
+  '',
 ]
 
-export default function FarmersTable({ farmers }) {
+export default function FarmersTable({
+  farmers = [],
+  loading = false,
+  pagination = {},
+  search = '',
+  onSearchChange,
+  onPageChange,
+}) {
   const navigate = useNavigate()
+  const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
+  const totalPages = pagination?.totalPages || 1
+  const limit = pagination?.limit || 20
+  const total = pagination?.total || 0
+
+  useEffect(() => {
+    setCurrentPage(pagination?.page || 1)
+  }, [pagination?.page])
+
+  const movePage = (next) => {
+    const page = Math.min(Math.max(1, next), totalPages)
+    setCurrentPage(page)
+    onPageChange?.(page)
+  }
+
+  const rangeStart = total ? (currentPage - 1) * limit + 1 : 0
+  const rangeEnd = Math.min(currentPage * limit, total)
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-      <FarmersFilterBar />
+    <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
+      <FarmersFilterBar search={search} onSearchChange={onSearchChange} />
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1000px]">
+        <table className="min-w-full text-left">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/50">
+            <tr className="border-b border-gray-100 bg-gray-50/80 text-xs font-semibold uppercase tracking-wide text-gray-500">
               {columns.map((col) => (
-                <th
-                  key={col}
-                  className="px-5 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-400"
-                >
+                <th key={col || 'actions'} className="px-5 py-3.5">
                   {col}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
-            {farmers.map((farmer) => (
-              <tr key={farmer.id} className="hover:bg-gray-50/50">
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={farmer.avatar}
-                      alt={farmer.name}
-                      className="h-9 w-9 shrink-0 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-900">{farmer.name}</p>
-                      <p className="text-xs text-gray-400">{farmer.id}</p>
+          <tbody className="divide-y divide-gray-100">
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="px-5 py-16 text-center text-sm text-gray-500">
+                  Loading farmers...
+                </td>
+              </tr>
+            ) : farmers.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-500">
+                  No farmers match your search.
+                </td>
+              </tr>
+            ) : (
+              farmers.map((farmer) => (
+                <tr
+                  key={farmer.id}
+                  className="cursor-pointer transition hover:bg-[#F7FAF9]"
+                  onClick={() => navigate(`/farmers/${farmer.id}`)}
+                >
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <UserAvatar
+                        name={farmer.name}
+                        avatar={farmer.avatar}
+                        className="h-10 w-10 shrink-0 text-sm"
+                      />
+                      <div className="min-w-0">
+                        <p className="truncate font-semibold text-gray-900">
+                          {farmer.name}
+                        </p>
+                        <p className="text-xs text-gray-400">{farmer.uid}</p>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-5 py-4 text-sm text-gray-600">{farmer.phone}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{farmer.location}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{farmer.landSize}</td>
-                <td className="px-5 py-4 text-sm text-gray-600">{farmer.crop}</td>
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold ${farmer.agent.color}`}
-                    >
-                      {farmer.agent.initials}
-                    </span>
-                    <span className="text-sm text-gray-600">{farmer.agent.name}</span>
-                  </div>
-                </td>
-                <td className="px-5 py-4">
-                  <StatusBadge status={farmer.status} />
-                </td>
-                <td className="px-5 py-4 text-sm text-gray-500">{farmer.lastAdvisory}</td>
-                <td className="px-5 py-4">
-                  <div className="flex items-center gap-1">
+                  </td>
+                  <td className="px-5 py-4 text-sm text-gray-600">{farmer.phone}</td>
+                  <td className="max-w-[200px] px-5 py-4">
+                    <p className="truncate text-sm text-gray-600" title={farmer.location}>
+                      {farmer.location}
+                    </p>
+                  </td>
+                  <td className="px-5 py-4 text-sm text-gray-600">
+                    {farmer.landSize}
+                    {farmer.fieldCount > 0 ? (
+                      <span className="block text-xs text-gray-400">
+                        {farmer.fieldCount} plot{farmer.fieldCount !== 1 ? 's' : ''}
+                      </span>
+                    ) : null}
+                  </td>
+                  <td className="px-5 py-4 text-sm text-gray-600">{farmer.crop}</td>
+                  <td className="px-5 py-4">
+                    <StatusBadge status={farmer.status} />
+                  </td>
+                  <td className="px-5 py-4 text-sm text-gray-500">
+                    {farmer.lastAdvisory}
+                  </td>
+                  <td className="px-5 py-4">
                     <button
                       type="button"
-                      onClick={() => navigate(`/farmers/${farmer.id}`)}
-                      className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                      aria-label="View"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate(`/farmers/${farmer.id}`)
+                      }}
+                      className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-primary"
+                      aria-label="View farmer"
                     >
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button
-                      type="button"
-                      className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                      aria-label="Edit"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-                      aria-label="More"
-                    >
-                      <MoreHorizontal className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
-      <div className="flex flex-col items-center justify-between gap-3 border-t border-gray-100 px-5 py-4 sm:flex-row">
-        <p className="text-sm text-gray-500">
-          Showing <span className="font-medium text-gray-700">1</span> to{' '}
-          <span className="font-medium text-gray-700">5</span> of{' '}
-          <span className="font-medium text-gray-700">12,458</span> farmers
-        </p>
-
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Previous
-          </button>
-          {[1, 2, 3].map((page) => (
+      {total > 0 ? (
+        <div className="flex flex-col gap-3 border-t border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-gray-500">
+            {rangeStart}–{rangeEnd} of {total}
+          </p>
+          <div className="flex items-center gap-1">
             <button
-              key={page}
               type="button"
-              className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium ${
-                page === 1
-                  ? 'bg-brand-primary text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
+              onClick={() => movePage(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 disabled:opacity-40"
             >
-              {page}
+              <ChevronLeft className="h-4 w-4" />
             </button>
-          ))}
-          <span className="px-1 text-gray-400">...</span>
-          <button
-            type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-sm text-gray-600 hover:bg-gray-100"
-          >
-            2492
-          </button>
-          <button
-            type="button"
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-50"
-          >
-            Next
-            <ChevronRight className="h-4 w-4" />
-          </button>
+            <span className="min-w-[2rem] px-2 text-center text-sm font-semibold text-gray-700">
+              {currentPage}
+            </span>
+            <button
+              type="button"
+              onClick={() => movePage(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className={clsx(
+                'flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200',
+                currentPage >= totalPages && 'opacity-40'
+              )}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   )
 }

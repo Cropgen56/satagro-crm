@@ -103,11 +103,9 @@ export default function PermissionReviewCards() {
           </span>
         </div>
 
-        <img
-          src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200"
-          alt=""
-          className="mt-6 h-[290px] w-full rounded-2xl object-cover"
-        />
+        <div className="mt-6 flex h-[200px] items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
+          Region map — available when API is connected
+        </div>
       </div>
 
       <div className="rounded-[22px] border border-[#E5E7EB] bg-white p-6">

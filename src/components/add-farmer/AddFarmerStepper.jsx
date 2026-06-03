@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { Check } from 'lucide-react'
-import { ADD_FARMER_STEPS } from '@/data/addFarmer'
+import { ADD_FARMER_STEPS } from '@/lib/moduleConstants'
 
 export default function AddFarmerStepper({ currentStep }) {
   return (

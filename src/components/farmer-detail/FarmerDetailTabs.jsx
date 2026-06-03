@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { FARMER_TABS } from '@/data/farmerDetail'
+import { FARMER_TABS } from '@/lib/moduleConstants'
 
 export default function FarmerDetailTabs({ activeTab, onTabChange }) {
   return (

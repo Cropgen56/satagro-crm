@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { LEAD_TABS } from '@/data/leads'
+import { LEAD_TABS } from '@/lib/moduleConstants'
 
 export default function LeadDetailTabs({ activeTab, onTabChange }) {
   return (

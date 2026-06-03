@@ -1,55 +1,127 @@
-import { CheckCircle2, RefreshCw, Users, UserX } from 'lucide-react'
-import FarmerSummaryCard from '@/components/farmers/FarmerSummaryCard'
+import { useCallback, useEffect, useState } from 'react'
+import PageTopBar from '@/components/layout/PageTopBar'
 import FarmersPageHeader from '@/components/farmers/FarmersPageHeader'
 import FarmersTable from '@/components/farmers/FarmersTable'
-import { farmersData } from '@/data/farmers'
+import FarmerSummaryCard from '@/components/farmers/FarmerSummaryCard'
+import EmptyState from '@/components/ui/EmptyState'
+import { fetchFarmers, fetchFarmerStats } from '@/lib/farmers'
+import { Sprout, Users, MapPin, BadgeCheck } from 'lucide-react'
 
 export default function FarmersPage() {
+  const [farmers, setFarmers] = useState([])
+  const [stats, setStats] = useState(null)
+  const [pagination, setPagination] = useState({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [search, setSearch] = useState('')
+
+  const load = useCallback(
+    async (page = 1, searchQuery = search) => {
+      try {
+        setLoading(true)
+        setError('')
+        const [statsRes, listRes] = await Promise.all([
+          fetchFarmerStats(),
+          fetchFarmers({
+            page,
+            limit: 20,
+            ...(searchQuery?.trim() ? { search: searchQuery.trim() } : {}),
+          }),
+        ])
+        setStats(statsRes?.stats || null)
+        setFarmers(listRes?.farmers || [])
+        setPagination(listRes?.pagination || {})
+      } catch (err) {
+        setError(err.message || 'Failed to load farmers')
+        setFarmers([])
+      } finally {
+        setLoading(false)
+      }
+    },
+    [search]
+  )
+
+  useEffect(() => {
+    const delay = search ? 350 : 0
+    const timer = setTimeout(() => load(1, search), delay)
+    return () => clearTimeout(timer)
+  }, [search, load])
+
+  const summaryCards = [
+    {
+      label: 'Total farmers',
+      value: stats?.total ?? '—',
+      note: 'BIODROPS org',
+      noteVariant: 'neutral',
+      icon: Users,
+      iconBg: 'bg-[#E7EFEC]',
+      iconColor: 'text-brand-primary',
+    },
+    {
+      label: 'Active subscriptions',
+      value: stats?.active ?? '—',
+      note: 'Paid / active',
+      noteVariant: 'success',
+      icon: BadgeCheck,
+      iconBg: 'bg-emerald-50',
+      iconColor: 'text-emerald-700',
+    },
+    {
+      label: 'With farm plots',
+      value: stats?.withFields ?? '—',
+      note: 'Has fields',
+      noteVariant: 'neutral',
+      icon: MapPin,
+      iconBg: 'bg-blue-50',
+      iconColor: 'text-blue-600',
+    },
+    {
+      label: 'Total acreage',
+      value: stats?.totalAcres != null ? `${stats.totalAcres} ac` : '—',
+      note: 'Registered land',
+      noteVariant: 'neutral',
+      icon: Sprout,
+      iconBg: 'bg-amber-50',
+      iconColor: 'text-amber-700',
+    },
+  ]
+
   return (
-    <div className="p-6 lg:p-8">
-      <FarmersPageHeader />
+    <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
+      <PageTopBar />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <FarmerSummaryCard
-          label="Total Farmers"
-          value="12,482"
-          note="+12% from last month"
-          noteVariant="success"
-          showTrend
-          icon={Users}
-          iconBg="bg-blue-50"
-          iconColor="text-blue-500"
-        />
-        <FarmerSummaryCard
-          label="Active Subs"
-          value="8,912"
-          note="71.4% retention"
-          noteVariant="success"
-          icon={CheckCircle2}
-          iconBg="bg-green-50"
-          iconColor="text-green-500"
-        />
-        <FarmerSummaryCard
-          label="Expiring Soon"
-          value="421"
-          note="Needs outreach"
-          noteVariant="warning"
-          icon={RefreshCw}
-          iconBg="bg-orange-50"
-          iconColor="text-orange-500"
-        />
-        <FarmerSummaryCard
-          label="Unassigned"
-          value="89"
-          note="Requires attention"
-          noteVariant="danger"
-          icon={UserX}
-          iconBg="bg-red-50"
-          iconColor="text-red-500"
-        />
+      <div className="mx-auto mt-6 max-w-[1400px] space-y-6">
+        <FarmersPageHeader />
+
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {summaryCards.map((card) => (
+            <FarmerSummaryCard key={card.label} {...card} />
+          ))}
+        </div>
+
+        {error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {error}
+          </div>
+        ) : null}
+
+        {!loading && farmers.length === 0 && !error ? (
+          <EmptyState
+            icon={Sprout}
+            title="No farmers yet"
+            description="Farmers with role farmer in the BIODROPS organization will appear here."
+          />
+        ) : (
+          <FarmersTable
+            farmers={farmers}
+            loading={loading}
+            pagination={pagination}
+            search={search}
+            onSearchChange={setSearch}
+            onPageChange={(page) => load(page, search)}
+          />
+        )}
       </div>
-
-      <FarmersTable farmers={farmersData} />
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { MapPin, Mountain } from 'lucide-react'
 import clsx from 'clsx'
 import FormSection from '../FormSection'
-import { districts, irrigationTypes, states, villages } from '@/data/addFarmer'
+import { districts, irrigationTypes, states, villages } from '@/lib/moduleConstants'
 
 const selectClass =
   'w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-brand-primary focus:ring-1 focus:ring-brand-primary'

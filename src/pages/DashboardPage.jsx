@@ -1,85 +1,79 @@
-import {
-  AlertTriangle,
-  DollarSign,
-  Megaphone,
-  ShieldCheck,
-  Star,
-  Users,
-} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Users, CheckCircle2, Clock3, Ban } from 'lucide-react'
 import PageHeader from '@/components/layout/PageHeader'
-import FarmerGrowthChart from '@/components/dashboard/FarmerGrowthChart'
-import RecentActivityFeed from '@/components/dashboard/RecentActivityFeed'
 import StatCard from '@/components/dashboard/StatCard'
-import SubscriptionDonutChart from '@/components/dashboard/SubscriptionDonutChart'
-import TopAgentsList from '@/components/dashboard/TopAgentsList'
+import EmptyState from '@/components/ui/EmptyState'
+import { useAuth } from '@/context/AuthContext'
+import { fetchUserManagementStats } from '@/lib/usermanagement'
 
 export default function DashboardPage() {
+  const { displayName, roleLabel } = useAuth()
+  const [stats, setStats] = useState(null)
+  const [statsError, setStatsError] = useState('')
+
+  useEffect(() => {
+    let active = true
+    fetchUserManagementStats()
+      .then((res) => {
+        if (active) setStats(res?.stats || null)
+      })
+      .catch((err) => {
+        if (active) setStatsError(err.message || 'Could not load stats')
+      })
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const fmt = (n) => (stats && n != null ? String(n) : '—')
+
   return (
     <div className="p-6 lg:p-8">
-      <PageHeader title="Dashboard" showFilters />
+      <PageHeader title="Dashboard" />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <p className="mb-6 text-sm text-gray-600">
+        Welcome back, <span className="font-semibold text-gray-900">{displayName}</span>
+        {roleLabel ? (
+          <>
+            {' '}
+            · <span className="text-gray-500">{roleLabel}</span>
+          </>
+        ) : null}
+      </p>
+
+      {statsError ? <p className="mb-4 text-sm text-amber-700">{statsError}</p> : null}
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total Farmers"
-          value="12,840"
-          change="+12%"
-          trend="up"
+          label="CRM Users"
+          value={fmt(stats?.totalUsers)}
           icon={Users}
           accent="blue"
         />
         <StatCard
-          label="Active Subs"
-          value="8,420"
-          change="+5%"
-          trend="up"
-          icon={ShieldCheck}
+          label="Active"
+          value={fmt(stats?.active)}
+          icon={CheckCircle2}
           accent="green"
         />
         <StatCard
-          label="Expiring Soon"
-          value="156"
-          change="-2%"
-          trend="down"
-          icon={AlertTriangle}
+          label="Pending"
+          value={fmt(stats?.pending)}
+          icon={Clock3}
           accent="yellow"
         />
         <StatCard
-          label="Total Revenue"
-          value="$142k"
-          change="+18%"
-          trend="up"
-          icon={DollarSign}
-          accent="purple"
-        />
-        <StatCard
-          label="Advisories"
-          value="4,230"
-          change="+24%"
-          trend="up"
-          icon={Megaphone}
-          accent="teal"
-        />
-        <StatCard
-          label="Risk Alerts"
-          value="18"
-          change="! High"
-          trend="alert"
-          icon={Star}
+          label="Disabled"
+          value={fmt(stats?.disabled)}
+          icon={Ban}
           accent="red"
         />
       </div>
 
-      <div className="mb-6 grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <FarmerGrowthChart />
-        </div>
-        <SubscriptionDonutChart />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <TopAgentsList />
-        <RecentActivityFeed />
-      </div>
+      <EmptyState
+        title="Operational metrics coming soon"
+        description="Farmer, subscription, and advisory analytics will appear here once those modules are connected to CropGen."
+      />
     </div>
   )
 }

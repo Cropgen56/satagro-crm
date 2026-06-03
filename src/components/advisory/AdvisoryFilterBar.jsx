@@ -1,5 +1,5 @@
 import { CalendarDays } from 'lucide-react'
-import { advisoryFilters } from '@/data/advisory'
+import { advisoryFilters } from '@/lib/moduleConstants'
 
 export default function AdvisoryFilterBar({
   filters,

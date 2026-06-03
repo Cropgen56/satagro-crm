@@ -20,7 +20,10 @@ const statusConfig = {
 }
 
 export default function StatusBadge({ status }) {
-  const config = statusConfig[status]
+  const config = statusConfig[status] || {
+    label: status || 'Unknown',
+    className: 'bg-gray-100 text-gray-600',
+  }
 
   return (
     <span

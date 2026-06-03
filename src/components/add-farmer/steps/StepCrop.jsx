@@ -1,7 +1,7 @@
 import { Leaf, X } from 'lucide-react'
 import clsx from 'clsx'
 import FormSection from '../FormSection'
-import { cropOptions, cropStages, seasons, secondaryCropOptions } from '@/data/addFarmer'
+import { cropOptions, cropStages, seasons, secondaryCropOptions } from '@/lib/moduleConstants'
 
 export default function StepCrop({ form, updateForm }) {
   const toggleSecondary = (crop) => {

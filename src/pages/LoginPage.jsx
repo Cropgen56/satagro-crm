@@ -1,30 +1,50 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { HelpCircle, Phone } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import AuthLayout from '@/components/layout/AuthLayout'
 import Button from '@/components/ui/Button'
 import Logo from '@/components/ui/Logo'
+import { apiRequest } from '@/lib/api'
+import { setLoginPhone } from '@/lib/auth'
+import { isValidIndianMobile, normalizeIndianPhone } from '@/lib/phone'
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const [phone, setPhone] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    navigate('/otp')
+    setError('')
+
+    if (!isValidIndianMobile(phone)) {
+      setError('Enter a valid 10-digit Indian mobile number')
+      return
+    }
+
+    const e164 = normalizeIndianPhone(phone)
+
+    try {
+      setLoading(true)
+      await apiRequest('/biodrops/whatsapp/otp', {
+        method: 'POST',
+        body: { phone: e164 },
+      })
+      setLoginPhone(e164)
+      navigate('/otp')
+    } catch (err) {
+      setError(err.message || 'Failed to send OTP')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <AuthLayout
       footer={
-        <p>
-          <a href="#" className="hover:text-brand-primary">
-            Terms of Service
-          </a>
-          {' · '}
-          <a href="#" className="hover:text-brand-primary">
-            Privacy Policy
-          </a>
+        <p className="text-gray-500">
+          OTP is sent to your WhatsApp number registered with SatAgro.
         </p>
       }
     >
@@ -33,9 +53,11 @@ export default function LoginPage() {
           <Logo size="md" className="mx-auto object-center" />
         </div>
 
-        <h2 className="text-center text-xl font-bold text-gray-900">Log in to your account</h2>
+        <h2 className="text-center text-xl font-bold text-gray-900">
+          Sign in to SatAgro CRM
+        </h2>
         <p className="mt-1 text-center text-sm text-gray-500">
-          Enter your mobile number to receive OTP
+          Enter your registered mobile number
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
@@ -53,27 +75,23 @@ export default function LoginPage() {
                 <input
                   id="phone"
                   type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  maxLength={10}
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="98765 43210"
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="10-digit mobile"
                   className="w-full py-3 pl-10 pr-3 text-sm outline-none"
                 />
               </div>
             </div>
           </div>
 
-          <Button type="submit" showArrow>
-            Send OTP
+          <Button type="submit" disabled={loading} showArrow>
+            {loading ? 'Sending OTP…' : 'Send OTP on WhatsApp'}
           </Button>
+          {error ? <p className="text-sm text-red-600">{error}</p> : null}
         </form>
-
-        <button
-          type="button"
-          className="mt-6 flex w-full items-center justify-center gap-1.5 text-sm text-gray-500 hover:text-brand-700"
-        >
-          <HelpCircle className="h-4 w-4" />
-          Need help?
-        </button>
       </div>
     </AuthLayout>
   )

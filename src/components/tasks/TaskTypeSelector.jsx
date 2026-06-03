@@ -7,7 +7,7 @@ import {
   Plus,
   RefreshCw,
 } from 'lucide-react'
-import { taskTypes } from '@/data/tasks'
+import { taskTypes } from '@/lib/moduleConstants'
 
 const icons = {
   eye: Eye,

@@ -1,7 +1,7 @@
 import { ChevronDown, FileText, Tag, UserPlus } from 'lucide-react'
 import clsx from 'clsx'
 import FormSection from '../FormSection'
-import { fieldAgents, subscriptionPlans } from '@/data/addFarmer'
+import { fieldAgents, subscriptionPlans } from '@/lib/moduleConstants'
 
 export default function StepSubscription({ form, updateForm }) {
   const selectedAgent = fieldAgents.find((a) => a.id === form.assignedAgent) || fieldAgents[0]

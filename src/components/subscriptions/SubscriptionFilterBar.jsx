@@ -1,5 +1,5 @@
 import { CalendarDays } from 'lucide-react'
-import { subscriptionFilters } from '@/data/subscription'
+import { subscriptionFilters } from '@/lib/moduleConstants'
 
 export default function SubscriptionFilterBar({
   filters,

@@ -48,18 +48,9 @@ export default function CreateRolePreview() {
         </div>
       </div>
 
-      <div className="relative mt-6 overflow-hidden rounded-xl">
-        <img
-          src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?w=800"
-          alt=""
-          className="h-[150px] w-full object-cover grayscale"
-        />
-
-        <div className="absolute inset-0 bg-brand-primary/30" />
-
-        <p className="absolute bottom-5 left-5 right-5 text-xs leading-5 text-white">
-          Enterprise role structures ensure data integrity across the CropGen ecosystem.
-        </p>
+      <div className="mt-6 rounded-xl bg-brand-primary/10 p-4 text-xs leading-5 text-brand-primary">
+        Role preview reflects permissions you configure. Save the role to persist when
+        the roles API is connected.
       </div>
     </div>
   )

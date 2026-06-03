@@ -8,7 +8,7 @@ const stats = [
   ['ACTIVE ROLES', '08', 'text-[#0F766E]'],
   ['CUSTOM ROLES', '04', 'text-[#78350F]'],
   ['RESTRICTED ROLES', '02', 'text-[#DC2626]'],
-  ['USERS ASSIGNED', '1,284', 'text-brand-primary'],
+  ['USERS ASSIGNED', '—', 'text-brand-primary'],
 ]
 
 export default function RoleSettingsTop() {

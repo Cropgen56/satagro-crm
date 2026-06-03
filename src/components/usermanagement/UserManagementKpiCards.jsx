@@ -1,81 +1,56 @@
-import {
-  Users,
-  CheckCircle2,
-  Clock3,
-  Ban,
-  Globe2,
-  GitBranch,
-} from 'lucide-react'
+import { Users, CheckCircle2, Clock3, Ban } from 'lucide-react'
 
 const cards = [
   {
-    label: 'TOTAL USERS',
-    value: '1,284',
+    key: 'totalUsers',
+    label: 'Total',
     icon: Users,
-    bg: 'bg-[#E7EFEC]',
-    color: 'text-brand-primary',
+    iconClass: 'text-brand-primary',
+    bgClass: 'bg-[#E7EFEC]',
   },
   {
-    label: 'ACTIVE',
-    value: '1,142',
+    key: 'active',
+    label: 'Active',
     icon: CheckCircle2,
-    bg: 'bg-[#DCFCE7]',
-    color: 'text-[#16A34A]',
+    iconClass: 'text-emerald-700',
+    bgClass: 'bg-emerald-50',
   },
   {
-    label: 'PENDING',
-    value: '94',
+    key: 'onboarding',
+    label: 'Onboarding',
     icon: Clock3,
-    bg: 'bg-[#FEF3C7]',
-    color: 'text-[#D97706]',
+    iconClass: 'text-amber-700',
+    bgClass: 'bg-amber-50',
+    compute: (s) => (s?.pending ?? 0) + (s?.awaitingLogin ?? 0),
   },
   {
-    label: 'DISABLED',
-    value: '48',
+    key: 'disabled',
+    label: 'Suspended',
     icon: Ban,
-    bg: 'bg-[#FCE7E7]',
-    color: 'text-[#DC2626]',
-  },
-  {
-    label: 'COUNTRY ADMINS',
-    value: '12',
-    icon: Globe2,
-    bg: 'bg-[#DBEAFE]',
-    color: 'text-[#2563EB]',
-  },
-  {
-    label: 'DIST. OPERATORS',
-    value: '312',
-    icon: GitBranch,
-    bg: 'bg-[#F3E8FF]',
-    color: 'text-[#9333EA]',
+    iconClass: 'text-red-700',
+    bgClass: 'bg-red-50',
   },
 ]
 
-export default function UserManagementKpiCards() {
+export default function UserManagementKpiCards({ stats }) {
   return (
-    <div className="grid grid-cols-2 gap-4 xl:grid-cols-6">
-      {cards.map((card) => {
-        const Icon = card.icon
-
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {cards.map(({ key, label, icon: Icon, iconClass, bgClass, compute }) => {
+        const value = compute ? compute(stats) : (stats?.[key] ?? 0)
         return (
           <div
-            key={card.label}
-            className="rounded-2xl bg-white p-5 shadow-sm"
+            key={key}
+            className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3.5 shadow-sm"
           >
             <div
-              className={`flex h-11 w-11 items-center justify-center rounded-xl ${card.bg}`}
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${bgClass}`}
             >
-              <Icon className={`h-5 w-5 ${card.color}`} />
+              <Icon className={`h-5 w-5 ${iconClass}`} />
             </div>
-
-            <p className="mt-4 text-[11px] font-semibold tracking-wide text-[#4B5563]">
-              {card.label}
-            </p>
-
-            <h3 className="mt-1 text-2xl font-bold text-brand-primary">
-              {card.value}
-            </h3>
+            <div>
+              <p className="text-xs font-medium text-gray-500">{label}</p>
+              <p className="text-xl font-bold text-gray-900">{value}</p>
+            </div>
           </div>
         )
       })}

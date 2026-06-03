@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { TASK_DETAIL_TABS } from '@/data/tasks'
+import { TASK_DETAIL_TABS } from '@/lib/moduleConstants'
 
 export default function TaskDetailTabs({ activeTab, onTabChange }) {
   return (

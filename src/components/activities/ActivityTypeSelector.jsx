@@ -1,6 +1,6 @@
 import clsx from 'clsx'
 import { Leaf, Phone, RefreshCw, Tractor, Users } from 'lucide-react'
-import { activityTypes } from '@/data/activities'
+import { activityTypes } from '@/lib/moduleConstants'
 
 const icons = {
   tractor: Tractor,

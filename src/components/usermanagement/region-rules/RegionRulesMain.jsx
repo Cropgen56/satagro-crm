@@ -128,16 +128,8 @@ export default function RegionRulesMain() {
             </div>
           </div>
 
-          <div className="relative mt-6 overflow-hidden rounded-xl">
-            <img
-              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200"
-              alt=""
-              className="h-[210px] w-full object-cover grayscale"
-            />
-
-            <div className="absolute right-5 top-4 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#202939] shadow-sm">
-              ● 12 Active Districts
-            </div>
+          <div className="mt-6 flex h-[210px] items-center justify-center rounded-xl border border-dashed border-gray-200 bg-gray-50 text-sm text-gray-500">
+            Region map preview — connect API for live boundaries
           </div>
         </div>
       </div>

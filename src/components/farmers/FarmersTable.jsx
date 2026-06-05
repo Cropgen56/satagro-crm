@@ -12,7 +12,7 @@ const columns = [
   'Location',
   'Land',
   'Crop',
-  'Status',
+  'Account',
   'Last active',
   '',
 ]

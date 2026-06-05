@@ -2,7 +2,22 @@
 
 import { Building2 } from 'lucide-react'
 
-export default function OrganizationInformationCard() {
+export default function OrganizationInformationCard({ user }) {
+  const organization = user?.organization || {}
+  const orgName = organization?.organizationName || '—'
+  const orgEmail = organization?.email || user?.email || '—'
+  const orgPhone = organization?.phoneNumber || user?.phone || '—'
+
+  const addressParts = [
+    organization?.address,
+    user?.village,
+    user?.city,
+    user?.state,
+    user?.country,
+  ].filter(Boolean)
+
+  const orgAddress = addressParts.length > 0 ? addressParts.join(', ') : '—'
+
   return (
     <div className="rounded-[26px] bg-white p-7 shadow-sm">
       <div className="flex items-center gap-3">
@@ -22,7 +37,7 @@ export default function OrganizationInformationCard() {
           </label>
 
           <input
-            value="AgriEnterprise Global"
+            value={orgName}
             readOnly
             className="h-[52px] w-full rounded-2xl border border-[#CAD3CF] px-4 text-[15px] text-[#1F2937] outline-none"
           />
@@ -34,7 +49,7 @@ export default function OrganizationInformationCard() {
           </label>
 
           <input
-            value="support@agrienterprise.com"
+            value={orgEmail}
             readOnly
             className="h-[52px] w-full rounded-2xl border border-[#CAD3CF] px-4 text-[15px] text-[#1F2937] outline-none"
           />
@@ -46,7 +61,7 @@ export default function OrganizationInformationCard() {
           </label>
 
           <input
-            value="+1 (555) 098-7654"
+            value={orgPhone}
             readOnly
             className="h-[52px] w-full rounded-2xl border border-[#CAD3CF] px-4 text-[15px] text-[#1F2937] outline-none"
           />
@@ -58,7 +73,7 @@ export default function OrganizationInformationCard() {
           </label>
 
           <textarea
-            value="742 Evergreen Terrace, Springfield, IL"
+            value={orgAddress}
             readOnly
             rows={2}
             className="w-full rounded-2xl border border-[#CAD3CF] px-4 py-3.5 text-[15px] text-[#1F2937] outline-none"

@@ -1,30 +1,52 @@
-/**
- * Orbit feature nodes for the auth hero animation.
- * Add optional `icon` paths (SVG/PNG) under public/auth/orbit/ — e.g. icon: '/auth/orbit/cropgen.svg'
- */
-export const ORBIT_ANIMATION_DURATION = 18
+export const ORBIT_ANIMATION_DURATION = 15
 
 export const ORBIT_FEATURES = [
-  { id: 'cropgen', label: 'CropGen Analytics', icon: '/auth/orbit/cropgen.svg' },
-  { id: 'weather', label: 'Weather Report', icon: '/auth/orbit/weather.svg' },
-  { id: 'operations', label: 'Operations', icon: '/auth/orbit/operations.svg' },
-  { id: 'disease', label: 'Disease Detection', icon: '/auth/orbit/disease.svg' },
-  { id: 'advisory', label: 'Smart Advisory', icon: '/auth/orbit/advisory.svg' },
-  { id: 'soil', label: 'Soil Report', icon: '/auth/orbit/soil.svg' },
+  { id: 'crop-advisory', label: 'Crop Advisory', icon: '/auth/orbit/group-503.svg' },
+  { id: 'weather', label: 'Weather Insights', icon: '/auth/orbit/group-504.svg' },
+  { id: 'soil', label: 'Soil Health', icon: '/auth/orbit/group-505.svg' },
+  { id: 'pest', label: 'Pest & Disease', icon: '/auth/orbit/group-506.svg' },
+  { id: 'irrigation', label: 'Irrigation Status', icon: '/auth/orbit/group-507.svg' },
+  { id: 'ndvi', label: 'NDVI Map', icon: '/auth/orbit/group-508.svg' },
+  { id: 'analytics', label: 'Field Analytics', icon: '/auth/orbit/group-509.svg' },
 ]
 
 export function getOrbitSizes(width) {
   if (width > 800) {
-    return { container: 400, orbitRadius: 190, nodeSize: 80, laptopWidth: 420 }
+    return {
+      sphereSize: 250,
+      orbitRadius: 100,
+      planetSize: 12,
+      laptopWidth: 190,
+    }
   }
   if (width > 700) {
-    return { container: 360, orbitRadius: 170, nodeSize: 72, laptopWidth: 380 }
+    return {
+      sphereSize: 240,
+      orbitRadius: 85,
+      planetSize: 11,
+      laptopWidth: 180,
+    }
   }
   if (width > 600) {
-    return { container: 300, orbitRadius: 145, nodeSize: 64, laptopWidth: 320 }
+    return {
+      sphereSize: 200,
+      orbitRadius: 75,
+      planetSize: 10,
+      laptopWidth: 150,
+    }
   }
   if (width > 500) {
-    return { container: 260, orbitRadius: 125, nodeSize: 56, laptopWidth: 280 }
+    return {
+      sphereSize: 180,
+      orbitRadius: 65,
+      planetSize: 9,
+      laptopWidth: 130,
+    }
   }
-  return { container: 220, orbitRadius: 105, nodeSize: 48, laptopWidth: 240 }
+  return {
+    sphereSize: 150,
+    orbitRadius: 55,
+    planetSize: 8,
+    laptopWidth: 110,
+  }
 }

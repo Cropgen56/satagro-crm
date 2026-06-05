@@ -1,9 +1,11 @@
-// InviteUserHeader.jsx
-
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
+import { hierarchyLevelLabel } from '@/lib/adminHierarchy'
 
 export default function InviteUserHeader() {
   const navigate = useNavigate()
+  const { roleLabel, hierarchy } = useAuth()
+  const creatable = hierarchy?.creatableLevels || []
 
   return (
     <header className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
@@ -15,6 +17,12 @@ export default function InviteUserHeader() {
         <p className="mt-1 text-sm text-gray-500">
           Create and invite a new CRM user to your organization.
         </p>
+        {roleLabel && creatable.length ? (
+          <p className="mt-2 text-xs text-brand-primary">
+            Signed in as {roleLabel}. You can invite:{' '}
+            {creatable.map(hierarchyLevelLabel).join(', ')}.
+          </p>
+        ) : null}
       </div>
 
       <div className="flex items-center gap-2">

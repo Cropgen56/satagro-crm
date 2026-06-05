@@ -39,6 +39,10 @@ export function OtpGuestRoute() {
     return <Navigate to="/dashboard" replace />
   }
 
+  if (isAuthenticated && !canAccessCrm) {
+    return <Navigate to="/access-denied" replace />
+  }
+
   if (!getLoginPhone()) {
     return <Navigate to="/login" replace />
   }

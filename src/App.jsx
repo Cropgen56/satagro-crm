@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from '@/components/auth/ProtectedRoute'
+import RootRedirect from '@/components/auth/RootRedirect'
 import { LoginGuestRoute, OtpGuestRoute } from '@/components/auth/GuestRoute'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import DashboardPage from '@/pages/DashboardPage'
@@ -21,7 +22,6 @@ import LoginPage from '@/pages/LoginPage'
 import OtpPage from '@/pages/OtpPage'
 import AcceptInvitationPage from '@/pages/AcceptInvitationPage'
 import AccessDeniedPage from '@/pages/AccessDeniedPage'
-import SubscriptionPage from '@/pages/SubscriptionPage'
 import AdvisoryPage from '@/pages/AdvisoryPage'
 import Notificationspage from '@/pages/Notificationspage'
 import Reportpage from '@/pages/Reportpage'
@@ -76,7 +76,7 @@ export default function App() {
           <Route path="/tasks/create" element={<CreateTaskPage />} />
           <Route path="/tasks/:id" element={<TaskDetailPage />} />
 
-          <Route path="/subscriptions" element={<SubscriptionPage />} />
+          <Route path="/subscriptions" element={<Navigate to="/dashboard" replace />} />
           <Route path="/advisories" element={<AdvisoryPage />} />
           <Route path="/notifications" element={<Notificationspage />} />
           <Route path="/reports" element={<Reportpage />} />
@@ -98,8 +98,8 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<RootRedirect />} />
+      <Route path="*" element={<RootRedirect />} />
     </Routes>
   )
 }

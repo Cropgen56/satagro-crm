@@ -6,6 +6,7 @@ import {
   Network,
   BellRing,
   Info,
+  AlertCircle,
   Check,
   X,
   ChevronDown,
@@ -13,36 +14,28 @@ import {
 } from 'lucide-react'
 
 import { useNavigate } from 'react-router-dom'
-import { createInvitation, fetchCrmAdmins } from '@/lib/usermanagement'
+import {
+  checkAssignmentAvailability,
+  createInvitation,
+  fetchCrmAdmins,
+} from '@/lib/usermanagement'
 import { isValidIndianMobile, normalizeIndianPhone } from '@/lib/phone'
-
-const roles = [
-  {
-    title: 'Super Admin',
-    desc: 'Full organizational control and management.',
-    level: 'super',
-  },
-  {
-    title: 'Country Admin',
-    desc: 'Regional oversight for a specific nation.',
-    level: 'country',
-  },
-  {
-    title: 'State User',
-    desc: 'State-level monitoring and data entry.',
-    level: 'state',
-  },
-  {
-    title: 'District Operator',
-    desc: 'On-field management of farmer clusters.',
-    level: 'district',
-  },
-  {
-    title: 'FPO / Agent',
-    desc: 'Frontline contact for farmer organizations.',
-    level: 'ground',
-  },
-]
+import { fetchCountries, fetchStates, fetchCitiesByState } from '@/lib/location'
+import { useAuth } from '@/context/AuthContext'
+import {
+  ADMIN_ROLES,
+  needsCountry,
+  needsState,
+  needsDistrict,
+  isScopeGeoReady,
+} from '@/lib/adminRoles'
+import {
+  filterCountriesForActor,
+  filterDistrictsForActor,
+  filterRolesForActor,
+  filterStatesForActor,
+  getDefaultGeoForActor,
+} from '@/lib/adminHierarchy'
 
 const permissions = [
   { label: 'Create Farmer Records', allowed: true },
@@ -51,37 +44,59 @@ const permissions = [
   { label: 'Delete Organization Data', allowed: false },
 ]
 
-function needsCountry(level) {
-  return ['country', 'state', 'district', 'ground'].includes(level)
-}
-
-function needsState(level) {
-  return ['state', 'district', 'ground'].includes(level)
-}
-
-function needsDistrict(level) {
-  return ['district', 'ground'].includes(level)
-}
-
 export default function InviteUserForm() {
   const navigate = useNavigate()
-  const [activeRole, setActiveRole] = useState('district')
+  const { hierarchy } = useAuth()
+  const actor = hierarchy?.actor
+  const availableRoles = useMemo(
+    () => filterRolesForActor(actor),
+    [actor],
+  )
+  const defaultGeo = useMemo(() => getDefaultGeoForActor(actor), [actor])
+  const [activeRole, setActiveRole] = useState(
+    availableRoles[availableRoles.length - 1]?.level || 'district',
+  )
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
-  const [countryCode, setCountryCode] = useState('IN')
-  const [stateCode, setStateCode] = useState('MH')
-  const [districtCode, setDistrictCode] = useState('PUNE')
+  const [countryCode, setCountryCode] = useState(defaultGeo.countryCode)
+  const [stateCode, setStateCode] = useState(defaultGeo.stateCode)
+  const [districtCode, setDistrictCode] = useState(defaultGeo.districtCode)
   const [reportsToUserId, setReportsToUserId] = useState('')
   const [managers, setManagers] = useState([])
+  const [countries, setCountries] = useState([])
+  const [states, setStates] = useState([])
+  const [districts, setDistricts] = useState([])
+  const [loadingCountries, setLoadingCountries] = useState(false)
+  const [loadingStates, setLoadingStates] = useState(false)
+  const [loadingDistricts, setLoadingDistricts] = useState(false)
   const [sendEmail, setSendEmail] = useState(true)
   const [sendSms, setSendSms] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [scopeStatus, setScopeStatus] = useState(null)
+  const [checkingScope, setCheckingScope] = useState(false)
+
+  useEffect(() => {
+    if (!availableRoles.some((role) => role.level === activeRole)) {
+      setActiveRole(availableRoles[availableRoles.length - 1]?.level || 'district')
+    }
+  }, [availableRoles, activeRole])
 
   useEffect(() => {
     let active = true
-    fetchCrmAdmins()
+    const params = {
+      forLevel: activeRole,
+      ...(needsCountry(activeRole) && countryCode
+        ? { countryCode }
+        : {}),
+      ...(needsState(activeRole) && stateCode ? { stateCode } : {}),
+      ...(needsDistrict(activeRole) && districtCode
+        ? { districtCode }
+        : {}),
+    }
+
+    fetchCrmAdmins(params)
       .then((res) => {
         if (active) setManagers(res?.admins || [])
       })
@@ -91,17 +106,186 @@ export default function InviteUserForm() {
     return () => {
       active = false
     }
-  }, [])
+  }, [activeRole, countryCode, stateCode, districtCode])
+
+  useEffect(() => {
+    let active = true
+    setLoadingCountries(true)
+    fetchCountries()
+      .then((rows) => {
+        if (!active) return
+        const filtered = filterCountriesForActor(actor, rows)
+        setCountries(filtered)
+        if (!countryCode && filtered[0]?.code) {
+          setCountryCode(filtered[0].code)
+        }
+      })
+      .catch(() => {
+        if (active) setCountries([])
+      })
+      .finally(() => {
+        if (active) setLoadingCountries(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [actor])
+
+  useEffect(() => {
+    if (!countryCode) {
+      setStates([])
+      setStateCode('')
+      return
+    }
+
+    let active = true
+    setLoadingStates(true)
+    fetchStates(countryCode)
+      .then((rows) => {
+        if (!active) return
+        const filtered = filterStatesForActor(actor, countryCode, rows)
+        setStates(filtered)
+        setStateCode((prev) => {
+          if (prev && filtered.some((s) => s.code === prev)) return prev
+          return filtered[0]?.code || ''
+        })
+      })
+      .catch(() => {
+        if (active) setStates([])
+      })
+      .finally(() => {
+        if (active) setLoadingStates(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [countryCode])
+
+  useEffect(() => {
+    if (!stateCode) {
+      setDistricts([])
+      setDistrictCode('')
+      return
+    }
+
+    let active = true
+    setLoadingDistricts(true)
+    fetchCitiesByState(stateCode, { limit: 500 })
+      .then((rows) => {
+        if (!active) return
+        const filtered = filterDistrictsForActor(
+          actor,
+          countryCode,
+          stateCode,
+          rows,
+        )
+        setDistricts(filtered)
+        setDistrictCode((prev) => {
+          if (prev && filtered.some((d) => d.code === prev)) return prev
+          return filtered[0]?.code || ''
+        })
+      })
+      .catch(() => {
+        if (active) {
+          setDistricts([])
+          setDistrictCode('')
+        }
+      })
+      .finally(() => {
+        if (active) setLoadingDistricts(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [stateCode])
 
   const roleMeta = useMemo(
-    () => roles.find((role) => role.level === activeRole) || roles[0],
-    [activeRole]
+    () =>
+      availableRoles.find((role) => role.level === activeRole) ||
+      ADMIN_ROLES.find((role) => role.level === activeRole) ||
+      availableRoles[0],
+    [activeRole, availableRoles],
   )
 
+  useEffect(() => {
+    if (error) setError('')
+  }, [
+    fullName,
+    email,
+    phone,
+    activeRole,
+    countryCode,
+    stateCode,
+    districtCode,
+    reportsToUserId,
+    sendEmail,
+    sendSms,
+  ])
+
+  useEffect(() => {
+    let active = true
+    const timer = setTimeout(async () => {
+      const params = {
+        level: activeRole,
+        countryCode: needsCountry(activeRole) ? countryCode : undefined,
+        stateCode: needsState(activeRole) ? stateCode : undefined,
+        districtCode: needsDistrict(activeRole) ? districtCode : undefined,
+      }
+
+      if (needsCountry(activeRole) && !countryCode) {
+        setScopeStatus(null)
+        return
+      }
+      if (needsState(activeRole) && !stateCode) {
+        setScopeStatus(null)
+        return
+      }
+      if (needsDistrict(activeRole) && !districtCode) {
+        setScopeStatus(null)
+        return
+      }
+
+      setCheckingScope(true)
+      try {
+        const result = await checkAssignmentAvailability(params)
+        if (!active) return
+        setScopeStatus(result)
+      } catch (err) {
+        if (!active) return
+        setScopeStatus({
+          available: false,
+          canAssign: false,
+          message: err.message || 'Failed to check assignment availability.',
+        })
+      } finally {
+        if (active) setCheckingScope(false)
+      }
+    }, 300)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [activeRole, countryCode, stateCode, districtCode])
+
+  const scopeGeoReady = isScopeGeoReady(activeRole, {
+    countryCode,
+    stateCode,
+    districtCode,
+  })
+  const needsUniqueSlot = activeRole !== 'ground'
+  const canAssignScope =
+    scopeGeoReady &&
+    (!needsUniqueSlot || (scopeStatus?.canAssign === true && !checkingScope))
   const canSubmit =
     fullName.trim() &&
     phone.trim() &&
-    (!sendEmail || email.trim())
+    (!sendEmail || email.trim()) &&
+    scopeGeoReady &&
+    canAssignScope &&
+    !checkingScope
 
   const handleContinue = async () => {
     if (!canSubmit) {
@@ -115,6 +299,14 @@ export default function InviteUserForm() {
 
     if (phone.trim() && !isValidIndianMobile(phone)) {
       setError('Enter a valid 10-digit Indian mobile number')
+      return
+    }
+
+    if (!canAssignScope) {
+      setError(
+        scopeStatus?.message ||
+          'This admin role is already assigned for the selected region.'
+      )
       return
     }
 
@@ -153,6 +345,16 @@ export default function InviteUserForm() {
   return (
     <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.7fr_0.8fr]">
       <div className="rounded-[22px] border border-[#E3E8E6] bg-white p-5 shadow-sm">
+        {error ? (
+          <div
+            role="alert"
+            className="mb-5 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{error}</p>
+          </div>
+        ) : null}
+
         <div className="flex items-center gap-2">
           <User2 className="h-4 w-4 text-brand-primary" />
           <h2 className="text-[17px] font-semibold text-[#202939]">
@@ -204,6 +406,116 @@ export default function InviteUserForm() {
         </div>
 
         <div className="mt-8 flex items-center gap-2">
+          <Network className="h-4 w-4 text-brand-primary" />
+          <h2 className="text-[17px] font-semibold text-[#202939]">
+            Assignment Scope
+          </h2>
+        </div>
+        <p className="mt-2 text-[12px] text-[#6B7280]">
+          Choose the region first. Only one admin is allowed per country, state, or district.
+          Multiple agents can share the same district.
+        </p>
+
+        {activeRole === 'super' ? (
+          <p className="mt-3 text-[13px] text-[#6B7280]">
+            Super Admin covers the full organization. Only one active Super Admin is allowed.
+          </p>
+        ) : (
+          <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div>
+              <label className="mb-2 block text-[12px] font-medium text-[#374151]">
+                Country
+              </label>
+              <select
+                value={countryCode}
+                onChange={(e) => {
+                  setCountryCode(e.target.value)
+                  setStateCode('')
+                  setDistrictCode('')
+                }}
+                className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
+                disabled={loadingCountries}
+              >
+                <option value="">
+                  {loadingCountries ? 'Loading countries...' : 'Select country'}
+                </option>
+                {countries.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.name} ({c.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-[12px] font-medium text-[#374151]">
+                State
+              </label>
+              <select
+                value={stateCode}
+                onChange={(e) => {
+                  setStateCode(e.target.value)
+                  setDistrictCode('')
+                }}
+                className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
+                disabled={loadingStates || !countryCode}
+              >
+                <option value="">
+                  {loadingStates ? 'Loading states...' : 'Select state'}
+                </option>
+                {states.map((s) => (
+                  <option key={s.code} value={s.code}>
+                    {s.name} ({s.code})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-[12px] font-medium text-[#374151]">
+                District
+              </label>
+              <select
+                value={districtCode}
+                onChange={(e) => setDistrictCode(e.target.value)}
+                className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
+                disabled={loadingDistricts || !stateCode}
+              >
+                <option value="">
+                  {loadingDistricts ? 'Loading districts...' : 'Select district'}
+                </option>
+                {districts.map((d) => (
+                  <option key={d.code} value={d.code}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {checkingScope ? (
+          <p className="mt-3 text-[12px] text-[#6B7280]">
+            Checking whether this admin slot is available...
+          </p>
+        ) : null}
+
+        {!checkingScope && scopeStatus?.message ? (
+          <div
+            role="status"
+            className={clsx(
+              'mt-3 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm',
+              scopeStatus.canAssign
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-amber-200 bg-amber-50 text-amber-900'
+            )}
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{scopeStatus.message}</p>
+          </div>
+        ) : null}
+
+        <div className="mt-8 flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4 text-brand-primary" />
           <h2 className="text-[17px] font-semibold text-[#202939]">
             Select User Role
@@ -211,7 +523,7 @@ export default function InviteUserForm() {
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-3 md:grid-cols-3">
-          {roles.map((role) => (
+          {availableRoles.map((role) => (
             <button
               key={role.title}
               type="button"
@@ -252,60 +564,23 @@ export default function InviteUserForm() {
           </h2>
         </div>
 
-        <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-2 block text-[12px] font-medium text-[#374151]">
-              Reports To
-            </label>
-            <select
-              value={reportsToUserId}
-              onChange={(e) => setReportsToUserId(e.target.value)}
-              className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
-            >
-              <option value="">Select manager (optional)</option>
-              {managers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} — {m.role}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {needsCountry(activeRole) ? (
-            <div>
-              <label className="mb-2 block text-[12px] font-medium text-[#374151]">
-                Country Code
-              </label>
-              <input
-                placeholder="e.g. IN"
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value.toUpperCase())}
-                className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
-              />
-            </div>
-          ) : null}
+        <div className="mt-5">
+          <label className="mb-2 block text-[12px] font-medium text-[#374151]">
+            Reports To
+          </label>
+          <select
+            value={reportsToUserId}
+            onChange={(e) => setReportsToUserId(e.target.value)}
+            className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
+          >
+            <option value="">Select manager (optional)</option>
+            {managers.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} — {m.role}
+              </option>
+            ))}
+          </select>
         </div>
-
-        {(needsState(activeRole) || needsDistrict(activeRole)) && (
-          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-            {needsState(activeRole) ? (
-              <input
-                placeholder="State Code (e.g. MH)"
-                value={stateCode}
-                onChange={(e) => setStateCode(e.target.value.toUpperCase())}
-                className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
-              />
-            ) : null}
-            {needsDistrict(activeRole) ? (
-              <input
-                placeholder="District Code (e.g. PUNE)"
-                value={districtCode}
-                onChange={(e) => setDistrictCode(e.target.value.toUpperCase())}
-                className="h-11 w-full rounded-xl border border-[#CBD5D1] bg-white px-4 text-[13px] outline-none focus:border-brand-primary"
-              />
-            ) : null}
-          </div>
-        )}
 
         <div className="mt-8 flex items-center gap-2">
           <BellRing className="h-4 w-4 text-brand-primary" />
@@ -352,7 +627,6 @@ export default function InviteUserForm() {
             ? 'We email a verification link. After they verify, they receive login steps (WhatsApp OTP).'
             : 'Turn on email invitation to send a verification link automatically.'}
         </p>
-        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
       </div>
 
       <div className="space-y-5">
@@ -402,7 +676,7 @@ export default function InviteUserForm() {
         <div className="flex justify-end">
           <button
             type="button"
-            disabled={loading}
+            disabled={loading || !canSubmit}
             onClick={handleContinue}
             className="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-5 py-3 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-950 disabled:opacity-60"
           >

@@ -21,7 +21,7 @@ export default function EditUserPage() {
       </button>
 
       <div className="mt-6 max-w-3xl">
-        <EditUserForm userId={id} />
+        <EditUserForm key={id} userId={id} />
       </div>
     </div>
   )

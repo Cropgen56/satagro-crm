@@ -5,7 +5,6 @@ import {
   Tractor,
   CalendarCheck,
   ClipboardList,
-  Tags,
   RadioTower,
   Bell,
   ChevronRight,
@@ -20,7 +19,6 @@ const modules = [
   [Tractor, 'Farmers', true],
   [CalendarCheck, 'Activities', false],
   [ClipboardList, 'Tasks', false],
-  [Tags, 'Subscriptions', false],
   [RadioTower, 'Advisories', false],
   [Bell, 'Notifications', false],
 ]
@@ -30,7 +28,6 @@ const rows = [
   ['Land Records', true, true, false],
   ['Crop Data', true, true, true],
   ['Documents', true, false, true],
-  ['Subscriptions', true, false, false],
   ['Advisory Access', true, true, true],
 ]
 

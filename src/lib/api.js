@@ -17,6 +17,26 @@ const PUBLIC_PATHS = [
 
 let refreshPromise = null
 
+export const TOKEN_AUTH_PATTERNS = [
+  'invalid or expired token',
+  'no token provided',
+  'invalid token',
+  'unauthorized',
+  'session expired',
+]
+
+export function isAuthErrorMessage(message = '') {
+  const normalized = String(message).toLowerCase()
+  return TOKEN_AUTH_PATTERNS.some((pattern) => normalized.includes(pattern))
+}
+
+function isTokenAuthFailure(response, data) {
+  if (response.status === 401) return true
+  if (response.status !== 403) return false
+  const message = String(data?.message || data?.error || '').toLowerCase()
+  return TOKEN_AUTH_PATTERNS.some((pattern) => message.includes(pattern))
+}
+
 function buildHeaders(extraHeaders = {}, accessToken = getAccessToken()) {
   return {
     'Content-Type': 'application/json',
@@ -35,7 +55,7 @@ async function parseJson(response) {
   }
 }
 
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
   const refreshToken = getRefreshToken()
   if (!refreshToken) {
     throw new Error('Session expired')
@@ -89,9 +109,10 @@ export async function apiRequest(path, options = {}, retry = true) {
   let data = await parseJson(response)
 
   if (
-    response.status === 401 &&
+    isTokenAuthFailure(response, data) &&
     retry &&
     !isPublic &&
+    path !== '/refresh' &&
     getRefreshToken()
   ) {
     try {
@@ -143,4 +164,15 @@ export function extractAccessToken(payload) {
 
 export function extractRefreshToken(payload) {
   return payload?.refreshToken || payload?.data?.refreshToken || null
+}
+
+export function buildQueryString(params = {}) {
+  const query = new URLSearchParams()
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      query.set(key, value)
+    }
+  })
+  const serialized = query.toString()
+  return serialized ? `?${serialized}` : ''
 }

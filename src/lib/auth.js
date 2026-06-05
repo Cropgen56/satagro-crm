@@ -53,6 +53,29 @@ export function hasStoredSession() {
   return Boolean(getAccessToken() || getRefreshToken())
 }
 
+/** Normalize Mongo/API user id for reliable comparisons. */
+export function getUserId(user) {
+  if (!user) return null
+  const raw = user.id ?? user._id
+  if (raw == null || raw === '') return null
+  return String(raw)
+}
+
+export function isSameUser(user, otherUserOrId) {
+  const left = getUserId(user)
+  const right =
+    typeof otherUserOrId === 'string' ? otherUserOrId : getUserId(otherUserOrId)
+  if (!left || !right) return false
+  return left === right
+}
+
+export function normalizeProfileUser(user) {
+  if (!user) return null
+  const id = getUserId(user)
+  if (!id) return user
+  return { ...user, id, _id: id }
+}
+
 export function canAccessCrm(user, assignments = []) {
   if (!user) return false
   if (PLATFORM_CRM_ROLES.has(user.role)) return true

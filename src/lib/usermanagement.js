@@ -1,18 +1,11 @@
-import { apiRequest } from '@/lib/api'
+import { apiRequest, buildQueryString } from '@/lib/api'
 
 export function fetchUserManagementStats() {
   return apiRequest('/crm/user-management/stats')
 }
 
 export function fetchUserManagementList(params = {}) {
-  const query = new URLSearchParams()
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      query.set(key, value)
-    }
-  })
-  const suffix = query.toString() ? `?${query.toString()}` : ''
-  return apiRequest(`/crm/user-management${suffix}`)
+  return apiRequest(`/crm/user-management${buildQueryString(params)}`)
 }
 
 export function fetchUserById(id) {
@@ -32,8 +25,12 @@ export function deleteCrmUser(id) {
   })
 }
 
-export function fetchCrmAdmins() {
-  return apiRequest('/crm/user-management/admins')
+export function fetchHierarchyCapabilities() {
+  return apiRequest('/crm/user-management/hierarchy')
+}
+
+export function fetchCrmAdmins(params = {}) {
+  return apiRequest(`/crm/user-management/admins${buildQueryString(params)}`)
 }
 
 export function fetchPendingInvitations() {
@@ -45,6 +42,10 @@ export function createInvitation(payload) {
     method: 'POST',
     body: payload,
   })
+}
+
+export function checkAssignmentAvailability(params = {}) {
+  return apiRequest(`/crm/invitations/check-availability${buildQueryString(params)}`)
 }
 
 export function suspendUserAssignment(assignmentId) {

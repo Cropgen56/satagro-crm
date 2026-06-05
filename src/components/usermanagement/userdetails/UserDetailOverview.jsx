@@ -12,7 +12,11 @@ export default function UserDetailOverview({ user, assignments = [] }) {
   }
 
   const rows = [
-    { icon: Mail, label: 'Email', value: user.email || '—' },
+    {
+      icon: Mail,
+      label: user.invitationEmail ? 'Invitation email' : 'Email',
+      value: user.contactEmail || user.invitationEmail || user.email || '—',
+    },
     { icon: Phone, label: 'Phone', value: user.phone || '—' },
     { icon: MapPin, label: 'Region', value: user.region || '—' },
     { icon: ShieldCheck, label: 'Role', value: user.role || '—' },

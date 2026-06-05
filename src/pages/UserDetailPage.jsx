@@ -9,10 +9,14 @@ import {
   suspendUserAssignment,
   deleteCrmUser,
 } from '@/lib/usermanagement'
+import { useAuth } from '@/context/AuthContext'
+import { isSameUser } from '@/lib/auth'
 
 export default function UserDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
+  const isSelf = isSameUser(currentUser, id)
   const [userData, setUserData] = useState(null)
   const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,6 +28,8 @@ export default function UserDetailPage() {
     try {
       setLoading(true)
       setError('')
+      setUserData(null)
+      setAssignments([])
       const response = await fetchUserById(id)
       setUserData(response?.user || null)
       setAssignments(response?.assignments || [])
@@ -79,7 +85,7 @@ export default function UserDetailPage() {
   }
 
   return (
-    <div className="min-h-full bg-[#F6F8F7] p-6 lg:p-8">
+    <div key={id} className="min-h-full bg-[#F6F8F7] p-6 lg:p-8">
       <PageTopBar />
 
       <div className="mt-8">
@@ -91,11 +97,20 @@ export default function UserDetailPage() {
           onDelete={handleDelete}
           suspendDisabled={
             actionLoading ||
+            !userData?.canManage ||
             !userData?.assignmentId ||
             userData?.assignmentStatus === 'suspended' ||
             userData?.status === 'DISABLED'
           }
-          actionDisabled={actionLoading}
+          actionDisabled={actionLoading || !userData?.canManage}
+          deleteDisabled={actionLoading || isSelf || !userData?.canManage}
+          deleteHint={
+            isSelf
+              ? 'You cannot remove your own account from here.'
+              : !userData?.canManage
+                ? 'You do not have permission to manage this user.'
+                : ''
+          }
           onBack={() => navigate('/user-management')}
         />
       </div>

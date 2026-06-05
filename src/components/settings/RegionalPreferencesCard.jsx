@@ -2,7 +2,13 @@
 
 import { Globe } from 'lucide-react'
 
-export default function RegionalPreferencesCard() {
+export default function RegionalPreferencesCard({ user }) {
+  const country = user?.country || '—'
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '—'
+  const browserLanguage =
+    typeof window !== 'undefined' ? window.navigator?.language : null
+  const language = user?.language || browserLanguage || '—'
+
   return (
     <div className="rounded-[26px] bg-white p-7 shadow-sm">
       <div className="flex items-center gap-3">
@@ -22,7 +28,7 @@ export default function RegionalPreferencesCard() {
           </label>
 
           <input
-            value="United States"
+            value={country}
             readOnly
             className="h-[52px] w-full rounded-2xl border border-[#CAD3CF] px-4 text-[15px] text-[#1F2937] outline-none"
           />
@@ -34,7 +40,7 @@ export default function RegionalPreferencesCard() {
           </label>
 
           <input
-            value="(GMT-06:00) Central Time"
+            value={timezone}
             readOnly
             className="h-[52px] w-full rounded-2xl border border-[#CAD3CF] px-4 text-[15px] text-[#1F2937] outline-none"
           />
@@ -46,7 +52,7 @@ export default function RegionalPreferencesCard() {
           </label>
 
           <input
-            value="English (US)"
+            value={language}
             readOnly
             className="h-[52px] w-full rounded-2xl border border-[#CAD3CF] px-4 text-[15px] text-[#1F2937] outline-none"
           />

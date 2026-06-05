@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import UserRowActions from '@/components/usermanagement/UserRowActions'
+import { useAuth } from '@/context/AuthContext'
+import { isSameUser } from '@/lib/auth'
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'All' },
@@ -40,6 +42,8 @@ function formatRegion(user) {
 }
 
 function contactLine(user) {
+  if (user.contactEmail) return user.contactEmail
+  if (user.invitationEmail) return user.invitationEmail
   if (user.email) return user.email
   if (user.phone) return user.phone
   return '—'
@@ -57,6 +61,7 @@ export default function UserManagementTable({
   onRefresh,
 }) {
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
   const totalPages = pagination?.totalPages || 1
   const limit = pagination?.limit || 20
@@ -139,7 +144,9 @@ export default function UserManagementTable({
                 </td>
               </tr>
             ) : (
-              users.map((user) => (
+              users.map((user) => {
+                const isSelf = isSameUser(currentUser, user.id)
+                return (
                 <tr
                   key={user.id}
                   onClick={() => navigate(`/user-management/${user.id}`)}
@@ -155,6 +162,11 @@ export default function UserManagementTable({
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-gray-900 group-hover:text-brand-primary">
                           {user.name}
+                          {isSelf ? (
+                            <span className="ml-2 rounded-full bg-brand-light px-2 py-0.5 text-[10px] font-bold uppercase text-brand-primary">
+                              You
+                            </span>
+                          ) : null}
                         </p>
                         <p className="truncate text-xs text-gray-500">
                           {contactLine(user)}
@@ -199,19 +211,21 @@ export default function UserManagementTable({
                       className="flex items-center justify-end gap-1"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button
-                        type="button"
-                        title="Edit"
-                        onClick={() => navigate(`/user-management/${user.id}/edit`)}
-                        className="rounded-lg p-2 text-gray-500 opacity-0 transition hover:bg-gray-100 hover:text-brand-primary group-hover:opacity-100"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
+                      {user.canManage ? (
+                        <button
+                          type="button"
+                          title="Edit"
+                          onClick={() => navigate(`/user-management/${user.id}/edit`)}
+                          className="rounded-lg p-2 text-gray-500 opacity-0 transition hover:bg-gray-100 hover:text-brand-primary group-hover:opacity-100"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      ) : null}
                       <UserRowActions user={user} onDeleted={onRefresh} />
                     </div>
                   </td>
                 </tr>
-              ))
+              )})
             )}
           </tbody>
         </table>

@@ -92,7 +92,7 @@ export default function StepPersonal({ form, updateForm }) {
           <div>
             <p className="text-sm font-semibold text-brand-primary">Why we need this?</p>
             <p className="mt-1 text-sm leading-relaxed text-gray-600">
-              Personal details help in creating a unique Farmer ID for compliance and subscription
+              Personal details help in creating a unique Farmer ID for compliance and record-keeping
               management. Ensure the mobile number is active for SMS notifications.
             </p>
           </div>

@@ -5,7 +5,6 @@ import {
   Building2,
   KeyRound,
   MessageSquareText,
-  CreditCard,
   Radio,
   Shield,
   Network,
@@ -29,10 +28,6 @@ const items = [
   {
     label: 'Notifications',
     icon: MessageSquareText,
-  },
-  {
-    label: 'Subscription Settings',
-    icon: CreditCard,
   },
   {
     label: 'Advisory Settings',
@@ -62,7 +57,7 @@ export default function SettingsSidebar() {
           return (
             <button
               key={item.label}
-              className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition ${
+              className={`flex w-full cursor-pointer items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition ${
                 item.active
                   ? 'bg-brand-primary text-white'
                   : 'text-[#4B5563] hover:bg-[#F5F7F6]'

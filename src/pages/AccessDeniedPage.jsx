@@ -27,7 +27,7 @@ export default function AccessDeniedPage() {
           </Button>
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            onClick={handleSignOut}
             className="block w-full text-sm text-brand-700 hover:underline"
           >
             Try a different number

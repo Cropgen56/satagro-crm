@@ -1,5 +1,5 @@
 import { Pencil } from 'lucide-react'
-import { cropOptions, fieldAgents, subscriptionPlans } from '@/lib/moduleConstants'
+import { cropOptions, fieldAgents } from '@/lib/moduleConstants'
 
 function ReviewCard({ title, onEdit, children }) {
   return (
@@ -38,7 +38,6 @@ function Field({ label, value, badge }) {
 export default function StepReview({ form, updateForm, goToStep }) {
   const primaryCrop = cropOptions.find((c) => c.id === form.primaryCrop)
   const agent = fieldAgents.find((a) => a.id === form.assignedAgent)
-  const plan = subscriptionPlans.find((p) => p.id === form.plan)
 
   return (
     <div className="space-y-6">
@@ -84,11 +83,9 @@ export default function StepReview({ form, updateForm, goToStep }) {
           </div>
         </ReviewCard>
 
-        <ReviewCard title="Subscription & Agent" onEdit={() => goToStep(4)}>
+        <ReviewCard title="Assignment & Notes" onEdit={() => goToStep(3)}>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Assigned Agent" value={agent?.name} />
-            <Field label="Plan" value={plan ? `${plan.name} (12M)` : ''} />
-            <Field label="Status" value="Pending Payment" />
           </div>
           {form.internalNotes && (
             <div className="mt-4 rounded-lg bg-gray-50 p-3">

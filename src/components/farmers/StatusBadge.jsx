@@ -5,16 +5,8 @@ const statusConfig = {
     label: 'Active',
     className: 'bg-green-50 text-green-700',
   },
-  expiring: {
-    label: 'Expiring',
-    className: 'bg-orange-50 text-orange-600',
-  },
-  expired: {
-    label: 'Expired',
-    className: 'bg-red-50 text-red-600',
-  },
-  trial: {
-    label: 'Trial',
+  registered: {
+    label: 'Registered',
     className: 'bg-blue-50 text-blue-600',
   },
 }

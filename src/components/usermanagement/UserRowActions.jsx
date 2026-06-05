@@ -2,9 +2,21 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoreVertical, Pencil, Trash2, Eye } from 'lucide-react'
 import { deleteCrmUser } from '@/lib/usermanagement'
+import { useAuth } from '@/context/AuthContext'
+import { isSameUser } from '@/lib/auth'
+import { canManageUser } from '@/lib/adminHierarchy'
 
 export default function UserRowActions({ user, onDeleted }) {
   const navigate = useNavigate()
+  const { user: currentUser, currentUserId, displayName, hierarchy } = useAuth()
+  const isSelf = isSameUser(currentUser, user.id) || currentUserId === String(user.id)
+  const canManage =
+    !isSelf &&
+    (user?.canManage != null
+      ? Boolean(user.canManage)
+      : hierarchy?.actor
+        ? canManageUser(hierarchy.actor, user)
+        : false)
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const ref = useRef(null)
@@ -18,6 +30,13 @@ export default function UserRowActions({ user, onDeleted }) {
   }, [])
 
   const handleDelete = async () => {
+    if (isSelf) {
+      window.alert(
+        `You are signed in as ${displayName || 'this account'}. You cannot remove your own CRM access. Ask another Super Admin to remove this account, or sign in with a different number.`,
+      )
+      return
+    }
+
     if (
       !window.confirm(
         `Remove "${user.name}" from the CRM team? They will lose admin access.`
@@ -68,26 +87,38 @@ export default function UserRowActions({ user, onDeleted }) {
             <Eye className="h-4 w-4" />
             View
           </button>
-          <button
-            type="button"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
-            onClick={() => {
-              setOpen(false)
-              navigate(`/user-management/${user.id}/edit`)
-            }}
-          >
-            <Pencil className="h-4 w-4" />
-            Edit
-          </button>
-          <button
-            type="button"
-            disabled={loading}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-            onClick={handleDelete}
-          >
-            <Trash2 className="h-4 w-4" />
-            {loading ? 'Removing...' : 'Remove'}
-          </button>
+          {canManage ? (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              onClick={() => {
+                setOpen(false)
+                navigate(`/user-management/${user.id}/edit`)
+              }}
+            >
+              <Pencil className="h-4 w-4" />
+              Edit
+            </button>
+          ) : null}
+          {isSelf ? (
+            <p className="px-3 py-2 text-xs text-gray-500">
+              You cannot remove your own account.
+            </p>
+          ) : canManage ? (
+            <button
+              type="button"
+              disabled={loading}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              onClick={handleDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+              {loading ? 'Removing...' : 'Remove'}
+            </button>
+          ) : (
+            <p className="px-3 py-2 text-xs text-gray-500">
+              You cannot manage this user.
+            </p>
+          )}
         </div>
       ) : null}
     </div>

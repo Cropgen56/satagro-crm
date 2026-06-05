@@ -4,8 +4,7 @@ export const ADD_FARMER_STEPS = [
   { id: 1, label: 'Personal Details' },
   { id: 2, label: 'Location & Land' },
   { id: 3, label: 'Crop Details' },
-  { id: 4, label: 'Subscription' },
-  { id: 5, label: 'Review & Save' },
+  { id: 4, label: 'Review & Save' },
 ]
 
 export const initialFarmerForm = {
@@ -34,7 +33,6 @@ export const initialFarmerForm = {
 export const FARMER_TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'fields', label: 'Fields' },
-  { id: 'subscription', label: 'Subscription' },
   { id: 'advisory', label: 'Advisory' },
   { id: 'activity', label: 'Activity' },
 ]

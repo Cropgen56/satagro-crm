@@ -4,31 +4,42 @@ import FarmersPageHeader from '@/components/farmers/FarmersPageHeader'
 import FarmersTable from '@/components/farmers/FarmersTable'
 import FarmerSummaryCard from '@/components/farmers/FarmerSummaryCard'
 import EmptyState from '@/components/ui/EmptyState'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { fetchFarmers, fetchFarmerStats } from '@/lib/farmers'
-import { Sprout, Users, MapPin, BadgeCheck } from 'lucide-react'
+import { Sprout, Users, MapPin, Activity } from 'lucide-react'
 
 export default function FarmersPage() {
   const [farmers, setFarmers] = useState([])
   const [stats, setStats] = useState(null)
   const [pagination, setPagination] = useState({})
   const [loading, setLoading] = useState(true)
+  const [statsLoading, setStatsLoading] = useState(true)
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
 
-  const load = useCallback(
-    async (page = 1, searchQuery = search) => {
+  const loadStats = useCallback(async () => {
+    try {
+      setStatsLoading(true)
+      const statsRes = await fetchFarmerStats()
+      setStats(statsRes?.stats || null)
+    } catch (err) {
+      setError(err.message || 'Failed to load farmer stats')
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
+
+  const loadFarmers = useCallback(
+    async (page = 1, searchQuery = debouncedSearch) => {
       try {
         setLoading(true)
         setError('')
-        const [statsRes, listRes] = await Promise.all([
-          fetchFarmerStats(),
-          fetchFarmers({
-            page,
-            limit: 20,
-            ...(searchQuery?.trim() ? { search: searchQuery.trim() } : {}),
-          }),
-        ])
-        setStats(statsRes?.stats || null)
+        const listRes = await fetchFarmers({
+          page,
+          limit: 20,
+          ...(searchQuery?.trim() ? { search: searchQuery.trim() } : {}),
+        })
         setFarmers(listRes?.farmers || [])
         setPagination(listRes?.pagination || {})
       } catch (err) {
@@ -38,19 +49,21 @@ export default function FarmersPage() {
         setLoading(false)
       }
     },
-    [search]
+    [debouncedSearch]
   )
 
   useEffect(() => {
-    const delay = search ? 350 : 0
-    const timer = setTimeout(() => load(1, search), delay)
-    return () => clearTimeout(timer)
-  }, [search, load])
+    loadStats()
+  }, [loadStats])
+
+  useEffect(() => {
+    loadFarmers(1, debouncedSearch)
+  }, [debouncedSearch, loadFarmers])
 
   const summaryCards = [
     {
       label: 'Total farmers',
-      value: stats?.total ?? '—',
+      value: statsLoading ? '—' : (stats?.total ?? '—'),
       note: 'BIODROPS org',
       noteVariant: 'neutral',
       icon: Users,
@@ -58,17 +71,17 @@ export default function FarmersPage() {
       iconColor: 'text-brand-primary',
     },
     {
-      label: 'Active subscriptions',
-      value: stats?.active ?? '—',
-      note: 'Paid / active',
+      label: 'Recently active',
+      value: statsLoading ? '—' : (stats?.recentlyActive ?? '—'),
+      note: 'Last 30 days',
       noteVariant: 'success',
-      icon: BadgeCheck,
+      icon: Activity,
       iconBg: 'bg-emerald-50',
       iconColor: 'text-emerald-700',
     },
     {
       label: 'With farm plots',
-      value: stats?.withFields ?? '—',
+      value: statsLoading ? '—' : (stats?.withFields ?? '—'),
       note: 'Has fields',
       noteVariant: 'neutral',
       icon: MapPin,
@@ -77,7 +90,11 @@ export default function FarmersPage() {
     },
     {
       label: 'Total acreage',
-      value: stats?.totalAcres != null ? `${stats.totalAcres} ac` : '—',
+      value: statsLoading
+        ? '—'
+        : stats?.totalAcres != null
+          ? `${stats.totalAcres} ac`
+          : '—',
       note: 'Registered land',
       noteVariant: 'neutral',
       icon: Sprout,
@@ -118,7 +135,7 @@ export default function FarmersPage() {
             pagination={pagination}
             search={search}
             onSearchChange={setSearch}
-            onPageChange={(page) => load(page, search)}
+            onPageChange={(page) => loadFarmers(page, debouncedSearch)}
           />
         )}
       </div>

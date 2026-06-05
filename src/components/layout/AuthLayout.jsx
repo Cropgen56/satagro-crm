@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
 import Logo from '@/components/ui/Logo'
-import AuthHeroAnimation from '@/components/auth/AuthHeroAnimation'
+import {
+  AuthHeroAnimationCompact,
+  AuthHeroAnimationDesktop,
+} from '@/components/auth/AuthHeroAnimation'
 
-const TABLET_BREAKPOINT = 1024
+const TABLET_BREAKPOINT = 834
 
 export default function AuthLayout({ children, footer }) {
   const [width, setWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1200,
   )
-  const isStacked = width < TABLET_BREAKPOINT
+  const isSmallTablet = width <= TABLET_BREAKPOINT
 
   useEffect(() => {
     const onResize = () => setWidth(window.innerWidth)
@@ -16,80 +19,82 @@ export default function AuthLayout({ children, footer }) {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  const heroText = (
-    <>
-      <h1 className="text-xl font-bold leading-tight text-white drop-shadow-md sm:text-2xl lg:text-3xl">
-        Your Smart Farming Assistant
-      </h1>
-      <p className="mt-3 max-w-lg text-sm font-medium leading-relaxed text-white/90 drop-shadow-md sm:text-base">
-        Powered by satellite insights, CropGen helps you detect, decide, and grow better—field by
-        field.
-      </p>
-    </>
-  )
-
-  if (isStacked) {
+  if (isSmallTablet) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <div className="relative flex min-h-[38vh] shrink-0 flex-col overflow-hidden bg-[#344E41] sm:min-h-[42vh]">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center opacity-25" />
-          <div className="absolute inset-0 bg-gradient-to-b from-brand-950/80 via-[#344E41]/90 to-[#344E41]" />
-
-          <div className="relative z-20 flex items-start justify-between px-4 pt-4 sm:px-6">
-            <Logo size="lg" className="brightness-0 invert" />
+      <div className="relative flex h-screen w-full flex-col overflow-hidden font-sans">
+        <div
+          className="relative flex w-full bg-brand-primary transition-all duration-300 ease-in-out"
+          style={{
+            height:
+              width > 830 ? '25vh' : width > 730 ? '30vh' : width > 600 ? '25vh' : '25vh',
+          }}
+        >
+          <div className="relative flex flex-[0.4] items-center justify-start px-2">
+            <AuthHeroAnimationCompact width={width} />
           </div>
 
-          <div className="relative z-10 flex flex-1 flex-col sm:flex-row">
-            <div className="flex flex-[0.45] items-center justify-start pl-2 sm:pl-4">
-              <div className="scale-[0.65] sm:scale-75" style={{ transformOrigin: 'left center' }}>
-                <AuthHeroAnimation width={width} compact />
-              </div>
+          <div className="relative flex flex-[0.6] flex-col items-end justify-center px-2 pr-4 text-right sm:items-center sm:px-2 sm:text-center">
+            <div className="absolute right-2 top-1 z-50 flex items-center gap-2 sm:top-2">
+              <Logo size="lg" className="h-12 w-auto brightness-0 invert lg:h-16" />
             </div>
-            <div className="flex flex-[0.55] flex-col justify-center px-4 pb-6 pt-20 text-center sm:items-center sm:pt-24 sm:text-center">
-              {heroText}
+
+            <div className="ml-2 mt-24 space-y-1 transition-all duration-300 ease-in-out sm:mx-8 sm:mt-28">
+              <h2 className="text-center text-base font-bold text-white [text-shadow:0px_4px_4px_rgba(0,0,0,0.25)] sm:text-3xl">
+                Your Smart Farming Assistant
+              </h2>
+              <p className="mx-auto max-w-[90%] text-center text-[8px] font-medium text-white/90 [text-shadow:0px_4px_4px_rgba(0,0,0,0.2)] sm:text-base">
+                Powered by satellite insights, SatAgro helps you detect, decide, and grow
+                better—field by field.
+              </p>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col bg-gray-50">
+        <div className="flex h-[65vh] flex-grow flex-col overflow-hidden bg-surface">
           <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-8">
             <div className="w-full max-w-md">{children}</div>
           </div>
-          {footer && (
+          {footer ? (
             <div className="px-4 pb-6 text-center text-xs text-gray-500">{footer}</div>
-          )}
+          ) : null}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="relative hidden overflow-hidden bg-[#344E41] lg:flex lg:flex-col">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1600&q=80')] bg-cover bg-center opacity-25" />
-        <div className="absolute inset-0 bg-gradient-to-br from-brand-950/70 via-[#344E41]/95 to-brand-900/80" />
+    <div className="relative flex h-screen w-full overflow-hidden font-sans">
+      <div className="relative h-full w-1/2 bg-brand-primary">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-950/40 via-brand-primary to-brand-900/80" />
 
-        <div className="relative z-20 px-8 pt-8">
-          <Logo size="lg" className="brightness-0 invert" />
+        <div className="absolute left-4 top-2 z-50 flex items-center gap-2 lg:left-6 lg:top-3">
+          <Logo size="lg" className="h-12 w-auto brightness-0 invert lg:h-16" />
         </div>
 
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-8 pb-10">
-          <div className="mb-8 max-w-md text-center">{heroText}</div>
-          <AuthHeroAnimation width={width} />
-        </div>
+        <div className="relative z-10 flex h-full w-full flex-col items-center justify-center px-6 pb-10 pt-16">
+          <div className="relative z-20 mb-6 max-w-lg space-y-3 text-center">
+            <h2 className="text-xl font-bold text-white [text-shadow:0px_4px_4px_rgba(0,0,0,0.25)] lg:text-3xl">
+              Your Smart Farming Assistant
+            </h2>
+            <p className="text-sm font-medium text-white/90 [text-shadow:0px_4px_4px_rgba(0,0,0,0.2)] lg:text-base">
+              Powered by satellite insights, SatAgro helps you detect, decide, and grow better—field
+              by field.
+            </p>
+          </div>
 
-        <p className="relative z-10 pb-8 text-center text-xs tracking-[0.2em] text-white/30">
-          PRECISION AGRICULTURE ECOSYSTEM
-        </p>
+          <div className="relative z-10">
+            <AuthHeroAnimationDesktop />
+          </div>
+        </div>
       </div>
 
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <div className="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">
-          <div className="w-full max-w-md">{children}</div>
+      <div className="flex h-full w-1/2 items-center justify-center bg-surface">
+        <div className="w-full max-w-md px-4 sm:px-8">
+          {children}
+          {footer ? (
+            <div className="mt-6 text-center text-xs text-gray-500">{footer}</div>
+          ) : null}
         </div>
-        {footer && (
-          <div className="px-4 pb-6 text-center text-xs text-gray-500">{footer}</div>
-        )}
       </div>
     </div>
   )

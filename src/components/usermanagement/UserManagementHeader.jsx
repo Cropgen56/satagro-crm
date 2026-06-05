@@ -1,8 +1,10 @@
 import { UserPlus, Clock3 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
 
 export default function UserManagementHeader({ pendingCount = 0 }) {
   const navigate = useNavigate()
+  const { canInviteUsers, roleLabel } = useAuth()
 
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -12,6 +14,9 @@ export default function UserManagementHeader({ pendingCount = 0 }) {
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           Invite and manage CRM admins by role and region.
+          {roleLabel ? (
+            <span className="ml-1 text-brand-primary">Signed in as {roleLabel}.</span>
+          ) : null}
         </p>
       </div>
 
@@ -30,14 +35,16 @@ export default function UserManagementHeader({ pendingCount = 0 }) {
           </button>
         ) : null}
 
-        <button
-          type="button"
-          onClick={() => navigate('/invite-user')}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-950"
-        >
-          <UserPlus className="h-4 w-4" />
-          Invite user
-        </button>
+        {canInviteUsers ? (
+          <button
+            type="button"
+            onClick={() => navigate('/invite-user')}
+            className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-950"
+          >
+            <UserPlus className="h-4 w-4" />
+            Invite user
+          </button>
+        ) : null}
       </div>
     </header>
   )

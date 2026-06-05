@@ -72,7 +72,7 @@ export default function DashboardPage() {
 
       <EmptyState
         title="Operational metrics coming soon"
-        description="Farmer, subscription, and advisory analytics will appear here once those modules are connected to CropGen."
+        description="Farmer and advisory analytics will appear here once those modules are connected to CropGen."
       />
     </div>
   )

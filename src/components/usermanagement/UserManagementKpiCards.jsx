@@ -16,12 +16,18 @@ const cards = [
     bgClass: 'bg-emerald-50',
   },
   {
-    key: 'onboarding',
-    label: 'Onboarding',
+    key: 'pending',
+    label: 'Email pending',
     icon: Clock3,
     iconClass: 'text-amber-700',
     bgClass: 'bg-amber-50',
-    compute: (s) => (s?.pending ?? 0) + (s?.awaitingLogin ?? 0),
+  },
+  {
+    key: 'awaitingLogin',
+    label: 'Awaiting login',
+    icon: Clock3,
+    iconClass: 'text-blue-700',
+    bgClass: 'bg-blue-50',
   },
   {
     key: 'disabled',
@@ -32,11 +38,15 @@ const cards = [
   },
 ]
 
-export default function UserManagementKpiCards({ stats }) {
+export default function UserManagementKpiCards({ stats, loading = false }) {
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map(({ key, label, icon: Icon, iconClass, bgClass, compute }) => {
-        const value = compute ? compute(stats) : (stats?.[key] ?? 0)
+        const value = loading
+          ? '—'
+          : compute
+            ? compute(stats)
+            : (stats?.[key] ?? 0)
         return (
           <div
             key={key}

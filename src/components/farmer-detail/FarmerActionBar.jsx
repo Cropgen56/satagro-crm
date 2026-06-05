@@ -3,14 +3,12 @@ import {
   Home,
   NotebookPen,
   Phone,
-  RefreshCw,
 } from 'lucide-react'
 
 const actions = [
   { label: 'Call Farmer', icon: Phone, primary: true },
   { label: 'Add Note', icon: NotebookPen },
   { label: 'Log Visit', icon: Home },
-  { label: 'Renew Subscription', icon: RefreshCw },
   { label: 'Create Task', icon: CheckSquare },
 ]
 

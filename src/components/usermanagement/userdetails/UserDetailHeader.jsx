@@ -22,6 +22,8 @@ export default function UserDetailHeader({
   onDelete,
   suspendDisabled,
   actionDisabled,
+  deleteDisabled = false,
+  deleteHint = '',
   onBack,
 }) {
   const assignedRegions = [user?.region, user?.territory]
@@ -80,14 +82,18 @@ export default function UserDetailHeader({
 
           <button
             type="button"
-            disabled={actionDisabled}
+            disabled={actionDisabled || deleteDisabled}
+            title={deleteHint || undefined}
             onClick={onDelete}
-            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-50 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
             Remove
           </button>
         </div>
+        {deleteHint ? (
+          <p className="mt-2 text-xs text-gray-500">{deleteHint}</p>
+        ) : null}
       </div>
 
       <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-white p-5 shadow-sm">
@@ -137,7 +143,7 @@ export default function UserDetailHeader({
               <div className="mt-4 flex flex-wrap items-center gap-6 text-sm text-[#374151]">
                 <span className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
-                  {user?.email || 'N/A'}
+                  {user?.contactEmail || user?.invitationEmail || user?.email || 'N/A'}
                 </span>
 
                 <span className="flex items-center gap-2">

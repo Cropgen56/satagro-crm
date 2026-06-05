@@ -1,7 +1,6 @@
 import {
   Bell,
   ClipboardList,
-  CreditCard,
   FileBarChart,
   LayoutDashboard,
   Leaf,
@@ -18,7 +17,6 @@ export const mainNav = [
   { label: 'Leads', path: '/leads', icon: Target },
   { label: 'Activities', path: '/activities', icon: ClipboardList },
   { label: 'Tasks', path: '/tasks', icon: ListTodo },
-  { label: 'Subscriptions', path: '/subscriptions', icon: CreditCard },
   { label: 'Advisories', path: '/advisories', icon: Leaf },
   { label: 'Notifications', path: '/notifications', icon: Bell },
   { label: 'Reports', path: '/reports', icon: FileBarChart },

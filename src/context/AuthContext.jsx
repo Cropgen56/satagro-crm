@@ -151,16 +151,14 @@ export function AuthProvider({ children }) {
     const local = buildHierarchyFromSession(user, assignments)
     if (!serverHierarchy?.creatableLevels?.length) return local
 
-    let creatableLevels = serverHierarchy.creatableLevels
-    if (local.highestLevel === 'super' || serverHierarchy.highestLevel === 'super') {
-      creatableLevels = creatableLevels.filter((level) => level !== 'super')
-    }
+    const creatableLevels = serverHierarchy.creatableLevels
 
     return {
       ...local,
       highestLevel: serverHierarchy.highestLevel || local.highestLevel,
       creatableLevels,
       geoScope: serverHierarchy.geoScope || local.geoScope,
+      superAdminSlots: serverHierarchy.superAdminSlots || null,
       canInvite: creatableLevels.length > 0,
     }
   }, [user, assignments, serverHierarchy])

@@ -25,6 +25,7 @@ import { fetchCountries, fetchStates, fetchCitiesByState } from '@/lib/location'
 import { useAuth } from '@/context/AuthContext'
 import {
   ADMIN_ROLES,
+  MAX_SUPER_ADMINS,
   needsCountry,
   needsState,
   needsDistrict,
@@ -497,7 +498,7 @@ export default function InviteUserForm() {
 
         {activeRole === 'super' ? (
           <p className="mt-3 text-[13px] text-[#6B7280]">
-            Super Admin covers the full organization. Only one active Super Admin is allowed.
+            Super Admin covers the full organization. Up to {MAX_SUPER_ADMINS} active Super Admins are allowed.
           </p>
         ) : (
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">

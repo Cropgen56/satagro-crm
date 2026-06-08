@@ -7,3 +7,7 @@ export function fetchFarmers(params = {}) {
 export function fetchFarmerStats() {
   return apiRequest('/crm/farmers/stats')
 }
+
+export function fetchFarmerById(id) {
+  return apiRequest(`/crm/farmers/${id}`)
+}

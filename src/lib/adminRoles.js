@@ -1,3 +1,5 @@
+export const MAX_SUPER_ADMINS = 5
+
 export const ADMIN_ROLES = [
   {
     title: 'Super Admin',

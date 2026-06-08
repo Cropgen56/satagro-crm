@@ -215,15 +215,7 @@ export function getCreatableLevels(actor) {
     }
   }
 
-  let levels = ADMIN_LEVEL_ORDER.filter((level) => creatable.has(level))
-
-  // Super admins invite roles below them; another super slot is rarely needed here.
-  const highest = getHighestAdminLevel(actor.adminAssignments || [])
-  if (highest === 'super') {
-    levels = levels.filter((level) => level !== 'super')
-  }
-
-  return levels
+  return ADMIN_LEVEL_ORDER.filter((level) => creatable.has(level))
 }
 
 export function summarizeActorGeoScope(actor) {

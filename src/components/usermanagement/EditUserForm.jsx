@@ -515,7 +515,7 @@ export default function EditUserForm({ userId }) {
 
         {activeRole === 'super' ? (
           <p className="mt-3 text-[13px] text-[#6B7280]">
-            Super Admin covers the full organization. Only one active Super Admin is allowed.
+            Super Admin covers the full organization. Up to 5 active Super Admins are allowed.
           </p>
         ) : (
           <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">

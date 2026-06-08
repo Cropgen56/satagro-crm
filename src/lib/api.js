@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   '/biodrops/whatsapp/otp',
   '/biodrops/whatsapp/verify',
   '/biodrops/whatsapp/resend',
+  '/biodrops/login/otp',
+  '/biodrops/login/verify',
 ]
 
 let refreshPromise = null

@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
-import { getLoginPhone } from '@/lib/auth'
+import { hasPendingOtpSession } from '@/lib/auth'
 
 export function LoginGuestRoute() {
   const { loading, isAuthenticated, canAccessCrm } = useAuth()
@@ -43,7 +43,7 @@ export function OtpGuestRoute() {
     return <Navigate to="/access-denied" replace />
   }
 
-  if (!getLoginPhone()) {
+  if (!hasPendingOtpSession()) {
     return <Navigate to="/login" replace />
   }
 

@@ -48,6 +48,10 @@ export function checkAssignmentAvailability(params = {}) {
   return apiRequest(`/crm/invitations/check-availability${buildQueryString(params)}`)
 }
 
+export function checkInviteUser(params = {}) {
+  return apiRequest(`/crm/invitations/check-user${buildQueryString(params)}`)
+}
+
 export function suspendUserAssignment(assignmentId) {
   return apiRequest(`/crm/user-management/assignments/${assignmentId}/suspend`, {
     method: 'PATCH',

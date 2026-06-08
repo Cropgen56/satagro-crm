@@ -16,6 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom'
 import {
   checkAssignmentAvailability,
+  checkInviteUser,
   createInvitation,
   fetchCrmAdmins,
 } from '@/lib/usermanagement'
@@ -76,6 +77,8 @@ export default function InviteUserForm() {
   const [error, setError] = useState('')
   const [scopeStatus, setScopeStatus] = useState(null)
   const [checkingScope, setCheckingScope] = useState(false)
+  const [inviteUserStatus, setInviteUserStatus] = useState(null)
+  const [checkingInviteUser, setCheckingInviteUser] = useState(false)
 
   useEffect(() => {
     if (!availableRoles.some((role) => role.level === activeRole)) {
@@ -270,6 +273,45 @@ export default function InviteUserForm() {
     }
   }, [activeRole, countryCode, stateCode, districtCode])
 
+  useEffect(() => {
+    let active = true
+    const timer = setTimeout(async () => {
+      const trimmedPhone = phone.trim()
+      const trimmedEmail = email.trim()
+      const normalizedPhone = trimmedPhone ? normalizeIndianPhone(trimmedPhone) : null
+      const hasValidPhone = trimmedPhone && isValidIndianMobile(trimmedPhone)
+      const hasEmail = Boolean(trimmedEmail)
+
+      if (!hasValidPhone && !hasEmail) {
+        setInviteUserStatus(null)
+        return
+      }
+
+      setCheckingInviteUser(true)
+      try {
+        const result = await checkInviteUser({
+          phone: hasValidPhone ? normalizedPhone : undefined,
+          email: hasEmail ? trimmedEmail : undefined,
+        })
+        if (!active) return
+        setInviteUserStatus(result)
+      } catch (err) {
+        if (!active) return
+        setInviteUserStatus({
+          canInvite: false,
+          message: err.message || 'Failed to check phone or email.',
+        })
+      } finally {
+        if (active) setCheckingInviteUser(false)
+      }
+    }, 400)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [phone, email])
+
   const scopeGeoReady = isScopeGeoReady(activeRole, {
     countryCode,
     stateCode,
@@ -279,13 +321,21 @@ export default function InviteUserForm() {
   const canAssignScope =
     scopeGeoReady &&
     (!needsUniqueSlot || (scopeStatus?.canAssign === true && !checkingScope))
+  const hasValidInvitePhone = phone.trim() && isValidIndianMobile(phone)
+  const hasInviteEmail = Boolean(email.trim())
+  const needsInviteUserCheck = hasValidInvitePhone || hasInviteEmail
+  const canInviteUser =
+    !needsInviteUserCheck ||
+    (!checkingInviteUser && inviteUserStatus?.canInvite === true)
   const canSubmit =
     fullName.trim() &&
     phone.trim() &&
     (!sendEmail || email.trim()) &&
     scopeGeoReady &&
     canAssignScope &&
-    !checkingScope
+    canInviteUser &&
+    !checkingScope &&
+    !checkingInviteUser
 
   const handleContinue = async () => {
     if (!canSubmit) {
@@ -306,6 +356,14 @@ export default function InviteUserForm() {
       setError(
         scopeStatus?.message ||
           'This admin role is already assigned for the selected region.'
+      )
+      return
+    }
+
+    if (inviteUserStatus?.canInvite === false) {
+      setError(
+        inviteUserStatus?.message ||
+          'This phone or email cannot be used for a new invitation.'
       )
       return
     }
@@ -404,6 +462,27 @@ export default function InviteUserForm() {
             />
           </div>
         </div>
+
+        {checkingInviteUser ? (
+          <p className="mt-3 text-[12px] text-[#6B7280]">
+            Checking whether this phone or email is already registered...
+          </p>
+        ) : null}
+
+        {!checkingInviteUser && inviteUserStatus?.message ? (
+          <div
+            role="status"
+            className={clsx(
+              'mt-3 flex items-start gap-3 rounded-lg border px-4 py-3 text-sm',
+              inviteUserStatus.canInvite
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-amber-200 bg-amber-50 text-amber-900'
+            )}
+          >
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{inviteUserStatus.message}</p>
+          </div>
+        ) : null}
 
         <div className="mt-8 flex items-center gap-2">
           <Network className="h-4 w-4 text-brand-primary" />

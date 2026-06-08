@@ -1,6 +1,8 @@
 const ACCESS_TOKEN_KEY = 'satagro_access_token'
 const REFRESH_TOKEN_KEY = 'satagro_refresh_token'
 const LOGIN_PHONE_KEY = 'satagro_login_phone'
+const LOGIN_EMAIL_KEY = 'satagro_login_email'
+const LOGIN_METHOD_KEY = 'satagro_login_method'
 
 const PLATFORM_CRM_ROLES = new Set(['admin', 'developer'])
 
@@ -33,20 +35,55 @@ export function clearRefreshToken() {
 export function setLoginPhone(phone) {
   if (!phone) return
   sessionStorage.setItem(LOGIN_PHONE_KEY, phone)
+  sessionStorage.setItem(LOGIN_METHOD_KEY, 'phone')
+  sessionStorage.removeItem(LOGIN_EMAIL_KEY)
 }
 
 export function getLoginPhone() {
   return sessionStorage.getItem(LOGIN_PHONE_KEY) || ''
 }
 
+export function setLoginEmail(email) {
+  if (!email) return
+  sessionStorage.setItem(LOGIN_EMAIL_KEY, email.trim().toLowerCase())
+  sessionStorage.setItem(LOGIN_METHOD_KEY, 'email')
+  sessionStorage.removeItem(LOGIN_PHONE_KEY)
+}
+
+export function getLoginEmail() {
+  return sessionStorage.getItem(LOGIN_EMAIL_KEY) || ''
+}
+
+export function getLoginMethod() {
+  const method = sessionStorage.getItem(LOGIN_METHOD_KEY)
+  if (method === 'email' || method === 'phone') return method
+  if (getLoginEmail()) return 'email'
+  if (getLoginPhone()) return 'phone'
+  return null
+}
+
 export function clearLoginPhone() {
   sessionStorage.removeItem(LOGIN_PHONE_KEY)
+}
+
+export function clearLoginEmail() {
+  sessionStorage.removeItem(LOGIN_EMAIL_KEY)
+}
+
+export function clearLoginSession() {
+  sessionStorage.removeItem(LOGIN_PHONE_KEY)
+  sessionStorage.removeItem(LOGIN_EMAIL_KEY)
+  sessionStorage.removeItem(LOGIN_METHOD_KEY)
 }
 
 export function clearAuthStorage() {
   clearAccessToken()
   clearRefreshToken()
-  clearLoginPhone()
+  clearLoginSession()
+}
+
+export function hasPendingOtpSession() {
+  return Boolean(getLoginPhone() || getLoginEmail())
 }
 
 export function hasStoredSession() {

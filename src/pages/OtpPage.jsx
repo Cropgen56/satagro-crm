@@ -5,16 +5,31 @@ import AuthLayout from '@/components/layout/AuthLayout'
 import Button from '@/components/ui/Button'
 import Logo from '@/components/ui/Logo'
 import { apiRequest } from '@/lib/api'
-import { getLoginPhone, clearLoginPhone } from '@/lib/auth'
+import {
+  clearLoginSession,
+  getLoginEmail,
+  getLoginMethod,
+  getLoginPhone,
+} from '@/lib/auth'
 import { maskPhone } from '@/lib/phone'
 import { useAuth } from '@/context/AuthContext'
 
 const OTP_LENGTH = 6
 
+function maskEmail(email) {
+  const value = String(email || '').trim()
+  const [local, domain] = value.split('@')
+  if (!local || !domain) return value
+  if (local.length <= 2) return `${local[0] || ''}***@${domain}`
+  return `${local.slice(0, 2)}***@${domain}`
+}
+
 export default function OtpPage() {
   const navigate = useNavigate()
   const { completeLogin } = useAuth()
+  const loginMethod = getLoginMethod()
   const phone = getLoginPhone()
+  const email = getLoginEmail()
   const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(''))
   const [countdown, setCountdown] = useState(30)
   const [error, setError] = useState('')
@@ -29,7 +44,13 @@ export default function OtpPage() {
   }, [countdown])
 
   const verify = async (code) => {
-    if (!phone) {
+    if (loginMethod === 'phone' && !phone) {
+      setError('Session expired. Please sign in again.')
+      navigate('/login', { replace: true })
+      return
+    }
+
+    if (loginMethod === 'email' && !email) {
       setError('Session expired. Please sign in again.')
       navigate('/login', { replace: true })
       return
@@ -43,16 +64,22 @@ export default function OtpPage() {
     setError('')
     try {
       setLoading(true)
-      const response = await apiRequest('/biodrops/whatsapp/verify', {
-        method: 'POST',
-        body: { phone, otp: code },
-      })
+      const response =
+        loginMethod === 'email'
+          ? await apiRequest('/biodrops/login/verify', {
+              method: 'POST',
+              body: { email, otp: code },
+            })
+          : await apiRequest('/biodrops/whatsapp/verify', {
+              method: 'POST',
+              body: { phone, otp: code },
+            })
       await completeLogin(response)
-      clearLoginPhone()
+      clearLoginSession()
       navigate('/dashboard', { replace: true })
     } catch (err) {
       if (err.code === 'CRM_ACCESS_DENIED') {
-        clearLoginPhone()
+        clearLoginSession()
         navigate('/access-denied', { replace: true })
         return
       }
@@ -104,14 +131,24 @@ export default function OtpPage() {
   }
 
   const handleResend = async () => {
-    if (!phone || resending) return
+    if (resending) return
+    if (loginMethod === 'phone' && !phone) return
+    if (loginMethod === 'email' && !email) return
+
     setError('')
     try {
       setResending(true)
-      await apiRequest('/biodrops/whatsapp/resend', {
-        method: 'POST',
-        body: { phone },
-      })
+      if (loginMethod === 'email') {
+        await apiRequest('/biodrops/login/otp', {
+          method: 'POST',
+          body: { email },
+        })
+      } else {
+        await apiRequest('/biodrops/whatsapp/resend', {
+          method: 'POST',
+          body: { phone },
+        })
+      }
       setCountdown(30)
       setOtp(Array(OTP_LENGTH).fill(''))
       inputRefs.current[0]?.focus()
@@ -121,6 +158,13 @@ export default function OtpPage() {
       setResending(false)
     }
   }
+
+  const destinationLabel =
+    loginMethod === 'email'
+      ? maskEmail(email)
+      : phone
+        ? maskPhone(phone)
+        : ''
 
   return (
     <AuthLayout
@@ -133,11 +177,11 @@ export default function OtpPage() {
       <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
         <Link
           to="/login"
-          onClick={() => clearLoginPhone()}
+          onClick={() => clearLoginSession()}
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-700"
         >
           <ArrowLeft className="h-4 w-4" />
-          Change number
+          {loginMethod === 'email' ? 'Change email' : 'Change number'}
         </Link>
 
         <div className="mb-6 flex justify-center">
@@ -146,11 +190,12 @@ export default function OtpPage() {
 
         <h2 className="text-center text-xl font-bold text-gray-900">Verify OTP</h2>
         <p className="mt-1 text-center text-sm text-gray-500">
-          Enter the 6-digit code sent to WhatsApp
-          {phone ? (
+          Enter the 6-digit code sent to{' '}
+          {loginMethod === 'email' ? 'your email' : 'WhatsApp'}
+          {destinationLabel ? (
             <>
               <br />
-              <span className="font-medium text-gray-700">{maskPhone(phone)}</span>
+              <span className="font-medium text-gray-700">{destinationLabel}</span>
             </>
           ) : null}
         </p>

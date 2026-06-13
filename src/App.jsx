@@ -40,6 +40,13 @@ import EditUserPage from '@/pages/EditUserPage'
 import RoleSettingsPage from '@/pages/RoleSettingsPage'
 import CreateRolePage from '@/pages/CreateRolePage'
 import ConfigurePermissionsPage from './pages/ConfigurePermissionsPage'
+import SubscriptionPage from '@/pages/SubscriptionPage'
+import SubscriptionPlansPage from '@/pages/SubscriptionPlansPage'
+import SubscriptionPlanFormPage from '@/pages/SubscriptionPlanFormPage'
+import AccessCardsPage from '@/pages/AccessCardsPage'
+import GenerateCardsPage from '@/pages/GenerateCardsPage'
+import AccessCardDetailPage from '@/pages/AccessCardDetailPage'
+import SubscribersPage from '@/pages/SubscribersPage'
 
 export default function App() {
   return (
@@ -76,7 +83,14 @@ export default function App() {
           <Route path="/tasks/create" element={<CreateTaskPage />} />
           <Route path="/tasks/:id" element={<TaskDetailPage />} />
 
-          <Route path="/subscriptions" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/subscriptions" element={<SubscriptionPage />} />
+          <Route path="/subscriptions/plans/new" element={<SubscriptionPlanFormPage />} />
+          <Route path="/subscriptions/plans/:id/edit" element={<SubscriptionPlanFormPage />} />
+          <Route path="/subscriptions/plans" element={<SubscriptionPlansPage />} />
+          <Route path="/subscriptions/cards/generate" element={<GenerateCardsPage />} />
+          <Route path="/subscriptions/cards/:id" element={<AccessCardDetailPage />} />
+          <Route path="/subscriptions/cards" element={<AccessCardsPage />} />
+          <Route path="/subscriptions/subscribers" element={<SubscribersPage />} />
           <Route path="/advisories" element={<AdvisoryPage />} />
           <Route path="/notifications" element={<Notificationspage />} />
           <Route path="/reports" element={<Reportpage />} />

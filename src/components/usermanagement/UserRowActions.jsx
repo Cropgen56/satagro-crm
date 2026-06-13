@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MoreVertical, Pencil, Trash2, Eye } from 'lucide-react'
 import { deleteCrmUser } from '@/lib/usermanagement'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { isSameUser } from '@/lib/auth'
 import { canManageUser } from '@/lib/adminHierarchy'
 

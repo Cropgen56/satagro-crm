@@ -1,5 +1,5 @@
 import { ShieldCheck } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 
 function formatDate(value) {
   if (!value) return '—'

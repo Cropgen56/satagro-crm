@@ -22,7 +22,7 @@ import {
 } from '@/lib/usermanagement'
 import { isValidIndianMobile, normalizeIndianPhone } from '@/lib/phone'
 import { fetchCountries, fetchStates, fetchCitiesByState } from '@/lib/location'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import {
   ADMIN_ROLES,
   MAX_SUPER_ADMINS,

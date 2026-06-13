@@ -2,7 +2,7 @@
 
 import React from 'react'
 import PageTopBar from '@/components/layout/PageTopBar'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 
 import SettingsHeader from '@/components/settings/SettingsHeader'
 import SettingsSidebar from '@/components/settings/SettingsSidebar'

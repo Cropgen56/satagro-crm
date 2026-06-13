@@ -1,4 +1,4 @@
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { UserAvatar } from '@/components/ui/EmptyState'
 
 export default function RegionAssignSidebar() {

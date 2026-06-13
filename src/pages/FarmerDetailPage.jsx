@@ -13,6 +13,9 @@ import {
 } from 'lucide-react'
 import PageTopBar from '@/components/layout/PageTopBar'
 import FarmerDetailTabs from '@/components/farmer-detail/FarmerDetailTabs'
+import SubscriptionTab from '@/components/farmer-detail/tabs/SubscriptionTab'
+import ProductCardsTab from '@/components/farmer-detail/tabs/ProductCardsTab'
+import AdvisoryTab from '@/components/farmer-detail/tabs/AdvisoryTab'
 import StatusBadge from '@/components/farmers/StatusBadge'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import RecordNotFoundPage from '@/pages/RecordNotFoundPage'
@@ -352,8 +355,14 @@ export default function FarmerDetailPage() {
           <div className="mt-6">
             {activeTab === 'overview' ? <OverviewPanel farmer={farmer} /> : null}
             {activeTab === 'fields' ? <FieldsPanel farmer={farmer} /> : null}
+            {activeTab === 'subscription' ? (
+              <SubscriptionTab farmer={farmer} onUpdated={loadFarmer} />
+            ) : null}
+            {activeTab === 'product_cards' ? (
+              <ProductCardsTab farmer={farmer} />
+            ) : null}
             {activeTab === 'advisory' ? (
-              <PlaceholderPanel title="Advisory history" />
+              <AdvisoryTab farmer={farmer} />
             ) : null}
             {activeTab === 'activity' ? (
               <PlaceholderPanel title="Activity history" />

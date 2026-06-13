@@ -1,5 +1,5 @@
 import { User, Building2 } from 'lucide-react'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 
 const fieldClass =
   'h-[56px] w-full rounded-2xl border border-[#CAD3CF] bg-gray-50 px-4 text-[16px] text-[#1F2937] outline-none'

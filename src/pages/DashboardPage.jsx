@@ -3,7 +3,7 @@ import { Users, CheckCircle2, Clock3, Ban } from 'lucide-react'
 import PageHeader from '@/components/layout/PageHeader'
 import StatCard from '@/components/dashboard/StatCard'
 import EmptyState from '@/components/ui/EmptyState'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { fetchUserManagementStats } from '@/lib/usermanagement'
 
 export default function DashboardPage() {

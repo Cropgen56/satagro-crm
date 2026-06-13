@@ -9,7 +9,7 @@ import {
   suspendUserAssignment,
   deleteCrmUser,
 } from '@/lib/usermanagement'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { isSameUser } from '@/lib/auth'
 
 export default function UserDetailPage() {

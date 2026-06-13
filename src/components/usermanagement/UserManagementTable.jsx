@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import UserRowActions from '@/components/usermanagement/UserRowActions'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 import { isSameUser } from '@/lib/auth'
 
 const STATUS_FILTERS = [

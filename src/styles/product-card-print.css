@@ -1,0 +1,225 @@
+/* Screen: hide print sheet without off-screen clipping issues */
+.print-only-sheet {
+  position: fixed;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+@media print {
+  @page {
+    size: 210mm 148mm landscape;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 210mm !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide entire app chrome; show only the print sheet */
+  #root,
+  #root * {
+    visibility: hidden !important;
+  }
+
+  .print-only-sheet,
+  .print-only-sheet * {
+    visibility: visible !important;
+  }
+
+  .print-only-sheet {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 210mm !important;
+    height: auto !important;
+    overflow: visible !important;
+    clip: auto !important;
+    clip-path: none !important;
+    white-space: normal !important;
+    z-index: 2147483647 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .product-access-card-page {
+    width: 210mm;
+    height: 148mm;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    page-break-after: always;
+    break-after: page;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    display: block;
+    box-sizing: border-box;
+  }
+
+  .product-access-card-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .print-card-item {
+    width: 210mm !important;
+    height: 148mm !important;
+    max-width: none !important;
+    min-height: 148mm !important;
+    aspect-ratio: unset !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+  }
+
+  .print-card-item .product-access-card-header {
+    flex-shrink: 0;
+    padding: 4mm 6mm !important;
+    background: #3d7a14 !important;
+    border-bottom: 0.4mm solid #2d5010 !important;
+  }
+
+  .print-card-item .product-access-card-header .brand-line {
+    font-size: 7pt !important;
+    letter-spacing: 0.22em !important;
+  }
+
+  .print-card-item .product-access-card-header .product-title {
+    font-size: 16pt !important;
+    line-height: 1.15 !important;
+    margin-top: 1mm !important;
+  }
+
+  .print-card-item .product-access-card-header .product-subtitle {
+    font-size: 8pt !important;
+    margin-top: 1mm !important;
+  }
+
+  .print-card-item .product-access-card-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1.15fr 1fr 0.9fr !important;
+    gap: 3mm !important;
+    padding: 3mm 4mm !important;
+    align-items: stretch !important;
+  }
+
+  .print-card-item .product-access-card-image {
+    padding: 2mm !important;
+    border-radius: 2mm !important;
+    background: #f4faf0 !important;
+    border: 0.3mm solid #d4edcc !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+  }
+
+  .print-card-item .product-access-card-image img {
+    max-height: 58mm !important;
+    max-width: 100% !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .print-card-item .product-access-card-benefits h3 {
+    font-size: 8.5pt !important;
+    margin-bottom: 1.5mm !important;
+  }
+
+  .print-card-item .product-access-card-benefits li {
+    font-size: 7.5pt !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.8mm !important;
+  }
+
+  .print-card-item .product-access-card-benefits li svg {
+    width: 3mm !important;
+    height: 3mm !important;
+  }
+
+  .print-card-item .product-access-card-entitlement {
+    margin-top: 2mm !important;
+    padding: 1.5mm 2mm !important;
+    font-size: 7pt !important;
+    border: 0.3mm solid #d4edcc !important;
+    background: #f0f9eb !important;
+  }
+
+  .print-card-item .product-access-card-entitlement .entitlement-value {
+    font-size: 8pt !important;
+    font-weight: 700 !important;
+  }
+
+  .print-card-item .product-access-card-code {
+    margin-top: 2mm !important;
+    font-size: 8.5pt !important;
+    letter-spacing: 0.06em !important;
+  }
+
+  .print-card-item .product-access-card-qr {
+    padding: 2mm !important;
+    border: 0.3mm solid #d4edcc !important;
+    background: #fafdfa !important;
+    border-radius: 2mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .print-card-item .product-access-card-qr-box {
+    padding: 1.5mm !important;
+    background: #fff !important;
+    border: 0.3mm solid #e5e7eb !important;
+  }
+
+  .print-card-item .product-access-card-qr svg {
+    width: 34mm !important;
+    height: 34mm !important;
+    display: block !important;
+  }
+
+  .print-card-item .product-access-card-qr .qr-label {
+    font-size: 7.5pt !important;
+    margin-top: 1.5mm !important;
+    font-weight: 700 !important;
+  }
+
+  .print-card-item .product-access-card-qr .qr-sublabel {
+    font-size: 6.5pt !important;
+    margin-top: 0.5mm !important;
+  }
+
+  .print-card-item .product-access-card-footer {
+    flex-shrink: 0;
+    padding: 2mm 4mm !important;
+    font-size: 6.5pt !important;
+    background: #f4faf0 !important;
+    border-top: 0.3mm solid #d4edcc !important;
+    flex-wrap: nowrap !important;
+    gap: 2mm !important;
+  }
+}

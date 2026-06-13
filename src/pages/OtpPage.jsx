@@ -12,7 +12,7 @@ import {
   getLoginPhone,
 } from '@/lib/auth'
 import { maskPhone } from '@/lib/phone'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 
 const OTP_LENGTH = 6
 

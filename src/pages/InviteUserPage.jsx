@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 import PageTopBar from '@/components/layout/PageTopBar'
 import InviteUserHeader from '@/components/usermanagement/invite-user/InviteUserHeader'
 import InviteUserForm from '@/components/usermanagement/invite-user/InviteUserForm'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth } from '@/hooks/useAuth'
 
 export default function InviteUserPage() {
   const { canInviteUsers, loading } = useAuth()

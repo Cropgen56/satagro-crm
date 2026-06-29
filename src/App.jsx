@@ -40,6 +40,10 @@ import EditUserPage from '@/pages/EditUserPage'
 import RoleSettingsPage from '@/pages/RoleSettingsPage'
 import CreateRolePage from '@/pages/CreateRolePage'
 import ConfigurePermissionsPage from './pages/ConfigurePermissionsPage'
+import ProductsPage from '@/pages/ProductsPage'
+import ProductFormPage from '@/pages/ProductFormPage'
+import OrdersPage from '@/pages/OrdersPage'
+import OrderDetailPage from '@/pages/OrderDetailPage'
 
 export default function App() {
   return (
@@ -62,6 +66,11 @@ export default function App() {
           <Route path="/farmers" element={<FarmersPage />} />
           <Route path="/farmers/add" element={<AddFarmerPage />} />
           <Route path="/farmers/:id" element={<FarmerDetailPage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/products/new" element={<ProductFormPage />} />
+          <Route path="/products/:id/edit" element={<ProductFormPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
           <Route path="/region-rules" element={<RegionRulesPage />} />
           <Route path="/leads" element={<LeadsPage />} />
           <Route path="/leads/add" element={<AddLeadPage />} />

@@ -5,7 +5,9 @@ import {
   LayoutDashboard,
   Leaf,
   ListTodo,
+  Package,
   Settings,
+  ShoppingBag,
   Target,
   Tractor,
   UserCog,
@@ -14,6 +16,8 @@ import {
 export const mainNav = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Farmers', path: '/farmers', icon: Tractor },
+  { label: 'Products', path: '/products', icon: Package },
+  { label: 'Orders', path: '/orders', icon: ShoppingBag },
   { label: 'Leads', path: '/leads', icon: Target },
   { label: 'Activities', path: '/activities', icon: ClipboardList },
   { label: 'Tasks', path: '/tasks', icon: ListTodo },

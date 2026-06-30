@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
-import PageTopBar from '@/components/layout/PageTopBar'
+import EcommercePageShell from '@/components/ecommerce/EcommercePageShell'
+import EcommerceStatGrid from '@/components/ecommerce/EcommerceStatGrid'
 import OrdersTable from '@/components/orders/OrdersTable'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-import { fetchOrders } from '@/lib/orders'
+import { fetchOrders, fetchOrderStats } from '@/lib/orders'
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState([])
   const [pagination, setPagination] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [stats, setStats] = useState(null)
+  const [statsLoading, setStatsLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [paymentStatus, setPaymentStatus] = useState('')
   const [fulfillmentStatus, setFulfillmentStatus] = useState('')
@@ -35,29 +38,71 @@ export default function OrdersPage() {
         setLoading(false)
       }
     },
-    [debouncedSearch, paymentStatus, fulfillmentStatus]
+    [debouncedSearch, paymentStatus, fulfillmentStatus],
   )
+
+  const loadStats = useCallback(async () => {
+    try {
+      setStatsLoading(true)
+      const res = await fetchOrderStats()
+      setStats(res?.stats || null)
+    } catch {
+      setStats(null)
+    } finally {
+      setStatsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadStats()
+  }, [loadStats])
 
   useEffect(() => {
     loadOrders(1)
   }, [loadOrders])
 
+  const statCards = [
+    {
+      label: 'Total orders',
+      value: statsLoading ? '—' : stats?.total ?? 0,
+      hint: 'All shop purchases',
+    },
+    {
+      label: 'Paid',
+      value: statsLoading ? '—' : stats?.paid ?? 0,
+      accent: 'border-emerald-100 bg-emerald-50/50',
+      labelClass: 'text-emerald-600',
+      valueClass: 'text-emerald-900',
+    },
+    {
+      label: 'Pending payment',
+      value: statsLoading ? '—' : stats?.pending ?? 0,
+      accent: 'border-amber-100 bg-amber-50/50',
+      labelClass: 'text-amber-700',
+      valueClass: 'text-amber-900',
+    },
+    {
+      label: 'Cancelled',
+      value: statsLoading ? '—' : stats?.cancelled ?? 0,
+      accent: 'border-gray-200 bg-gray-50',
+      labelClass: 'text-gray-500',
+    },
+  ]
+
   return (
-    <div className="space-y-6">
-      <PageTopBar />
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight text-brand-primary lg:text-[26px]">
-          Orders
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Farmer shop purchases — track payment and fulfillment.
-        </p>
-      </header>
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+    <EcommercePageShell
+      section="Fulfillment"
+      title="Orders"
+      description="Track farmer shop purchases — payment status, fulfillment progress, cancellations, and refunds."
+    >
+      <EcommerceStatGrid items={statCards} />
+
+      {error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
-      )}
+      ) : null}
+
       <OrdersTable
         orders={orders}
         loading={loading}
@@ -70,6 +115,6 @@ export default function OrdersPage() {
         onFulfillmentStatusChange={setFulfillmentStatus}
         onPageChange={loadOrders}
       />
-    </div>
+    </EcommercePageShell>
   )
 }

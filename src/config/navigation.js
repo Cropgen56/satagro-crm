@@ -6,7 +6,6 @@ import {
   LayoutDashboard,
   Leaf,
   ListTodo,
-  Package,
   Settings,
   ShoppingBag,
   Target,
@@ -25,12 +24,23 @@ export const subscriptionNav = {
   ],
 }
 
+export const ecommerceNav = {
+  label: 'Ecommerce',
+  path: '/ecommerce',
+  icon: ShoppingBag,
+  children: [
+    { label: 'Products', path: '/ecommerce/products' },
+    { label: 'Orders', path: '/ecommerce/orders' },
+    { label: 'Payments', path: '/ecommerce/payments' },
+    { label: 'Invoices', path: '/ecommerce/invoices' },
+  ],
+}
+
 export const mainNav = [
   { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   { label: 'Farmers', path: '/farmers', icon: Tractor },
   subscriptionNav,
-  { label: 'Products', path: '/products', icon: Package },
-  { label: 'Orders', path: '/orders', icon: ShoppingBag },
+  ecommerceNav,
   { label: 'Leads', path: '/leads', icon: Target },
   { label: 'Activities', path: '/activities', icon: ClipboardList },
   { label: 'Tasks', path: '/tasks', icon: ListTodo },
@@ -59,6 +69,9 @@ export const allNavItems = [
 export function isNavChildActive(pathname, childPath) {
   if (childPath === '/subscriptions') {
     return pathname === '/subscriptions'
+  }
+  if (childPath === '/ecommerce') {
+    return pathname === '/ecommerce'
   }
   return pathname === childPath || pathname.startsWith(`${childPath}/`)
 }

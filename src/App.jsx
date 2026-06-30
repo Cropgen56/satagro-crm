@@ -51,6 +51,10 @@ import ProductsPage from '@/pages/ProductsPage'
 import ProductFormPage from '@/pages/ProductFormPage'
 import OrdersPage from '@/pages/OrdersPage'
 import OrderDetailPage from '@/pages/OrderDetailPage'
+import EcommercePage from '@/pages/EcommercePage'
+import EcommercePaymentsPage from '@/pages/EcommercePaymentsPage'
+import EcommerceInvoicesPage from '@/pages/EcommerceInvoicesPage'
+import { RedirectOrderDetail, RedirectProductEdit } from '@/components/ecommerce/RedirectRoutes'
 
 export default function App() {
   return (
@@ -73,11 +77,20 @@ export default function App() {
           <Route path="/farmers" element={<FarmersPage />} />
           <Route path="/farmers/add" element={<AddFarmerPage />} />
           <Route path="/farmers/:id" element={<FarmerDetailPage />} />
-          <Route path="/products" element={<ProductsPage />} />
-          <Route path="/products/new" element={<ProductFormPage />} />
-          <Route path="/products/:id/edit" element={<ProductFormPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/products" element={<Navigate to="/ecommerce/products" replace />} />
+          <Route path="/products/new" element={<Navigate to="/ecommerce/products/new" replace />} />
+          <Route path="/products/:id/edit" element={<RedirectProductEdit />} />
+          <Route path="/orders" element={<Navigate to="/ecommerce/orders" replace />} />
+          <Route path="/orders/:id" element={<RedirectOrderDetail />} />
+
+          <Route path="/ecommerce" element={<EcommercePage />} />
+          <Route path="/ecommerce/products" element={<ProductsPage />} />
+          <Route path="/ecommerce/products/new" element={<ProductFormPage />} />
+          <Route path="/ecommerce/products/:id/edit" element={<ProductFormPage />} />
+          <Route path="/ecommerce/orders" element={<OrdersPage />} />
+          <Route path="/ecommerce/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/ecommerce/payments" element={<EcommercePaymentsPage />} />
+          <Route path="/ecommerce/invoices" element={<EcommerceInvoicesPage />} />
           <Route path="/region-rules" element={<RegionRulesPage />} />
           <Route path="/leads" element={<LeadsPage />} />
           <Route path="/leads/add" element={<AddLeadPage />} />

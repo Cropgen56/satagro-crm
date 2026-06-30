@@ -3,13 +3,14 @@ import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import PageTopBar from '@/components/layout/PageTopBar'
 import OrderDetailPanel from '@/components/orders/OrderDetailPanel'
-import { fetchOrderById, updateOrder } from '@/lib/orders'
+import { fetchOrderById, updateOrder, cancelOrder } from '@/lib/orders'
 
 export default function OrderDetailPage() {
   const { id } = useParams()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -43,9 +44,22 @@ export default function OrderDetailPage() {
     }
   }
 
+  const handleCancel = async (body) => {
+    try {
+      setCancelling(true)
+      setError('')
+      const res = await cancelOrder(id, body)
+      setOrder(res?.order || null)
+    } catch (err) {
+      setError(err.message || 'Failed to cancel order')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
   if (loading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         <PageTopBar />
         <p className="text-sm text-gray-500">Loading order...</p>
       </div>
@@ -54,7 +68,7 @@ export default function OrderDetailPage() {
 
   if (!order) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
         <PageTopBar />
         <p className="text-sm text-red-600">{error || 'Order not found'}</p>
       </div>
@@ -62,11 +76,11 @@ export default function OrderDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
       <PageTopBar />
-      <div>
+      <div className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100 sm:px-5">
         <Link
-          to="/orders"
+          to="/ecommerce/orders"
           className="mb-3 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-brand-primary"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -76,7 +90,14 @@ export default function OrderDetailPage() {
           {order.orderNumber}
         </h1>
       </div>
-      <OrderDetailPanel order={order} onSave={handleSave} saving={saving} error={error} />
+      <OrderDetailPanel
+        order={order}
+        onSave={handleSave}
+        onCancel={handleCancel}
+        saving={saving}
+        cancelling={cancelling}
+        error={error}
+      />
     </div>
   )
 }

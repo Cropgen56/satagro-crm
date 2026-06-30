@@ -19,3 +19,7 @@ export function updateProduct(id, body) {
 export function archiveProduct(id) {
   return apiRequest(`/crm/products/${id}`, { method: 'DELETE' })
 }
+
+export function deleteProduct(id) {
+  return apiRequest(`/crm/products/${id}`, { method: 'DELETE' })
+}

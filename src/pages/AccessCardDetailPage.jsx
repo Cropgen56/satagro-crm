@@ -240,6 +240,7 @@ export default function AccessCardDetailPage() {
             {[
               ['Status', card.status],
               ['Card code', displayCode || '—'],
+              ['Plan', card.planId?.name || '—'],
               ['Acre limit', `${card.acreLimit} acres`],
               ['Acres used', formatAcres(usage.usedAcres)],
               ['Acres remaining', formatAcres(usage.remainingAcres)],

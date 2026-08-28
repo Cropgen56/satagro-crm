@@ -65,7 +65,7 @@ export default function SubscriptionTab({ farmer, onUpdated }) {
       setError('')
       const [subsRes, plansRes] = await Promise.all([
         fetchFarmerSubscriptions(farmer.id),
-        fetchSubscriptionPlans('mobile'),
+        fetchSubscriptionPlans(),
       ])
       setRows(subsRes?.data || [])
       setPlans((plansRes?.data || []).filter((p) => p.active !== false))

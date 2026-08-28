@@ -18,16 +18,9 @@ import {
   Layers,
   Pencil,
   Plus,
-  Smartphone,
   Trash2,
 } from 'lucide-react'
 import clsx from 'clsx'
-
-const PLATFORM_FILTERS = [
-  { value: '', label: 'All platforms' },
-  { value: 'mobile', label: 'Mobile' },
-  { value: 'web', label: 'Web' },
-]
 
 function PlanStatCard({ label, value, hint }) {
   return (
@@ -46,13 +39,12 @@ export default function SubscriptionPlansPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
-  const [platformFilter, setPlatformFilter] = useState('')
 
   const load = useCallback(async () => {
     try {
       setLoading(true)
       setError('')
-      const res = await fetchSubscriptionPlans(platformFilter)
+      const res = await fetchSubscriptionPlans()
       setPlans(res?.data || [])
     } catch (err) {
       setError(err.message || 'Failed to load plans')
@@ -60,7 +52,7 @@ export default function SubscriptionPlansPage() {
     } finally {
       setLoading(false)
     }
-  }, [platformFilter])
+  }, [])
 
   useEffect(() => {
     load()
@@ -111,8 +103,8 @@ export default function SubscriptionPlansPage() {
             Subscription plans
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-gray-500">
-            Create and manage BioDrops per-acre plans — pricing, trials, and
-            feature flags shown when farmers unlock a field
+            Create and manage BioDrops acre-package plans — pricing, trials,
+            and feature flags shown when farmers unlock a field
           </p>
         </div>
 
@@ -136,26 +128,6 @@ export default function SubscriptionPlansPage() {
         <PlanStatCard label="Public" value={stats.publicPlans} />
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {PLATFORM_FILTERS.map((item) => (
-            <button
-              key={item.value || 'all'}
-              type="button"
-              onClick={() => setPlatformFilter(item.value)}
-              className={clsx(
-                'rounded-lg px-3 py-1.5 text-sm font-medium transition',
-                platformFilter === item.value
-                  ? 'bg-brand-primary text-white'
-                  : 'bg-white text-gray-600 ring-1 ring-gray-200 hover:bg-gray-50',
-              )}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {error ? (
         <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
@@ -176,7 +148,7 @@ export default function SubscriptionPlansPage() {
           <EmptyState
             icon={Layers}
             title="No plans yet"
-            description="Create a BioDrops subscription plan with per-acre pricing and feature flags for the farmer app."
+            description="Create a BioDrops subscription plan with acre-package pricing and feature flags for the farmer app."
           />
           <div className="text-center">
             <Link
@@ -251,10 +223,6 @@ export default function SubscriptionPlansPage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                  <span className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1 capitalize">
-                    <Smartphone className="h-3 w-3" />
-                    {plan.platform}
-                  </span>
                   <span className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-1">
                     <Calendar className="h-3 w-3" />
                     {plan.isTrialEnabled

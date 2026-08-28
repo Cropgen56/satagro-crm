@@ -1,4 +1,4 @@
-import { apiRequest, buildQueryString } from '@/lib/api'
+import { apiRequest } from '@/lib/api'
 
 export const PLAN_FEATURE_KEYS = [
   'satelliteImagery',
@@ -86,25 +86,22 @@ export function slugifyPlanName(name) {
 }
 
 export function buildPlanPayload(form) {
-  const tierMode = Boolean(form.isTierPlan)
-  const monthlyRupees = Number(
-    tierMode ? form.tierMonthlyPrice : form.monthlyPricePerAcre,
-  )
-  const yearlyRupees = Number(
-    tierMode ? form.tierYearlyPrice : form.yearlyPricePerAcre,
-  )
+  const monthlyRupees = Number(form.monthlyPrice)
+  const yearlyRupees = Number(form.yearlyPrice)
 
   return {
     name: String(form.name || '').trim(),
     slug: String(form.slug || '').trim(),
     description: String(form.description || '').trim(),
-    platform: form.platform || 'mobile',
+    // BioDrops plans are platform-agnostic — one plan covers mobile and web.
+    platform: 'all',
     brand: 'biodrops',
     isInternal: Boolean(form.isInternal),
     isTrialEnabled: Boolean(form.isTrialEnabled),
     trialDays: form.isTrialEnabled ? Number(form.trialDays) || 15 : 0,
     active: form.active !== false,
-    maxAcres: tierMode ? Number(form.maxAcres) || null : null,
+    // BioDrops plans are always flat acre packages now, never per-acre pricing.
+    maxAcres: Number(form.maxAcres) || null,
     pricing: [
       {
         currency: 'INR',
@@ -138,12 +135,9 @@ export function getTierCapWarning(plan, fieldAcres) {
   return null
 }
 
-export function fetchSubscriptionPlans(platform) {
-  const params = {}
-  if (platform === 'mobile' || platform === 'web') {
-    params.platform = platform
-  }
-  return apiRequest(`/crm/subscription-plans${buildQueryString(params)}`)
+export function fetchSubscriptionPlans() {
+  // BioDrops plans are platform-agnostic now — no platform filter needed.
+  return apiRequest('/crm/subscription-plans')
 }
 
 export function fetchSubscriptionPlanById(planId) {

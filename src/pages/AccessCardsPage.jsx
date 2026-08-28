@@ -164,6 +164,7 @@ export default function AccessCardsPage() {
               <tr>
                 <th className="px-4 py-3">Card</th>
                 <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Plan</th>
                 <th className="px-4 py-3">Acres</th>
                 <th className="px-4 py-3">Used / left</th>
                 <th className="px-4 py-3">Duration</th>
@@ -183,6 +184,9 @@ export default function AccessCardsPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">
                     {card.batchId?.productName || '—'}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">
+                    {card.planId?.name || '—'}
                   </td>
                   <td className="px-4 py-3">{card.acreLimit}</td>
                   <td className="px-4 py-3 text-gray-700">

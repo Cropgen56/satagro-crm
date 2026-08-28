@@ -29,6 +29,10 @@ const EMPTY_FORM = {
   platform: 'mobile',
   monthlyPricePerAcre: '50',
   yearlyPricePerAcre: '500',
+  isTierPlan: false,
+  maxAcres: '10',
+  tierMonthlyPrice: '999',
+  tierYearlyPrice: '9990',
   isTrialEnabled: true,
   trialDays: '15',
   active: true,
@@ -43,18 +47,21 @@ function planToForm(plan) {
   const yearly = (plan?.pricing || []).find(
     (p) => p.billingCycle === 'yearly' && p.currency === 'INR',
   )
+  const isTierPlan = Number(plan?.maxAcres) > 0
+  const monthlyValue = monthly ? String(Number(monthly.pricePerUnitMinor) / 100) : ''
+  const yearlyValue = yearly ? String(Number(yearly.pricePerUnitMinor) / 100) : ''
 
   return {
     name: plan?.name || '',
     slug: plan?.slug || '',
     description: plan?.description || '',
     platform: plan?.platform || 'mobile',
-    monthlyPricePerAcre: monthly
-      ? String(Number(monthly.pricePerUnitMinor) / 100)
-      : '50',
-    yearlyPricePerAcre: yearly
-      ? String(Number(yearly.pricePerUnitMinor) / 100)
-      : '500',
+    monthlyPricePerAcre: isTierPlan ? '50' : monthlyValue || '50',
+    yearlyPricePerAcre: isTierPlan ? '500' : yearlyValue || '500',
+    isTierPlan,
+    maxAcres: isTierPlan ? String(plan.maxAcres) : '10',
+    tierMonthlyPrice: isTierPlan ? monthlyValue || '999' : '999',
+    tierYearlyPrice: isTierPlan ? yearlyValue || '9990' : '9990',
     isTrialEnabled: plan?.isTrialEnabled !== false,
     trialDays: String(plan?.trialDays ?? 15),
     active: plan?.active !== false,
@@ -128,7 +135,19 @@ export default function SubscriptionPlanFormPage() {
       setError('Slug is required')
       return
     }
-    if (
+    if (form.isTierPlan) {
+      if (
+        Number(form.tierMonthlyPrice) < 0 ||
+        Number(form.tierYearlyPrice) < 0
+      ) {
+        setError('Prices cannot be negative')
+        return
+      }
+      if (!(Number(form.maxAcres) > 0)) {
+        setError('Max acres covered must be greater than 0')
+        return
+      }
+    } else if (
       Number(form.monthlyPricePerAcre) < 0 ||
       Number(form.yearlyPricePerAcre) < 0
     ) {
@@ -179,8 +198,8 @@ export default function SubscriptionPlanFormPage() {
           {isEdit ? 'Edit subscription plan' : 'Create subscription plan'}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Configure per-acre pricing, trial settings, and feature flags for the
-          BioDrops mobile app
+          Configure per-acre or acre-capped package pricing, trial settings,
+          and feature flags for the BioDrops app
         </p>
       </header>
 
@@ -258,53 +277,136 @@ export default function SubscriptionPlanFormPage() {
             </div>
           </FormSection>
 
-          <FormSection icon={IndianRupee} title="Per-acre pricing (INR)">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Monthly price per acre
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                    ₹
-                  </span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={form.monthlyPricePerAcre}
-                    onChange={(e) =>
-                      update('monthlyPricePerAcre', e.target.value)
-                    }
-                    className={clsx(inputClass, 'pl-7')}
-                  />
-                </div>
-              </div>
+          <FormSection icon={IndianRupee} title="Pricing (INR)">
+            <label className="flex items-center gap-2 rounded-xl border border-gray-100 bg-gray-50/60 px-4 py-3 text-sm text-gray-700">
+              <input
+                type="checkbox"
+                checked={form.isTierPlan}
+                onChange={(e) => update('isTierPlan', e.target.checked)}
+                className="rounded border-gray-300 text-brand-primary"
+              />
+              Cap this plan to a maximum acreage (flat package price)
+            </label>
 
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Yearly price per acre
-                </label>
-                <div className="relative">
-                  <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                    ₹
-                  </span>
+            {form.isTierPlan ? (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                    Max acres covered
+                  </label>
                   <input
                     type="number"
-                    min="0"
+                    min="1"
                     step="1"
-                    value={form.yearlyPricePerAcre}
-                    onChange={(e) =>
-                      update('yearlyPricePerAcre', e.target.value)
-                    }
-                    className={clsx(inputClass, 'pl-7')}
+                    value={form.maxAcres}
+                    onChange={(e) => update('maxAcres', e.target.value)}
+                    className={clsx(inputClass, 'max-w-[160px]')}
+                    placeholder="10"
                   />
+                  <p className="mt-1 text-xs text-gray-400">
+                    e.g. 10, 20, 50 — fields larger than this show a warning at
+                    checkout but are not blocked
+                  </p>
                 </div>
-              </div>
-            </div>
-            <p className="text-xs text-gray-400">
-              Checkout amount = field acres × selected per-acre rate
-            </p>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Monthly package price
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        ₹
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={form.tierMonthlyPrice}
+                        onChange={(e) =>
+                          update('tierMonthlyPrice', e.target.value)
+                        }
+                        className={clsx(inputClass, 'pl-7')}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Yearly package price
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        ₹
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={form.tierYearlyPrice}
+                        onChange={(e) =>
+                          update('tierYearlyPrice', e.target.value)
+                        }
+                        className={clsx(inputClass, 'pl-7')}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Checkout amount = flat package price, regardless of the
+                  field's exact acreage (up to the cap)
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Monthly price per acre
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        ₹
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={form.monthlyPricePerAcre}
+                        onChange={(e) =>
+                          update('monthlyPricePerAcre', e.target.value)
+                        }
+                        className={clsx(inputClass, 'pl-7')}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-sm font-medium text-gray-700">
+                      Yearly price per acre
+                    </label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        ₹
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        value={form.yearlyPricePerAcre}
+                        onChange={(e) =>
+                          update('yearlyPricePerAcre', e.target.value)
+                        }
+                        className={clsx(inputClass, 'pl-7')}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-400">
+                  Checkout amount = field acres × selected per-acre rate
+                </p>
+              </>
+            )}
           </FormSection>
 
           <FormSection icon={Sparkles} title="Trial & visibility">

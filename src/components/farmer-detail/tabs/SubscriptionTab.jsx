@@ -7,7 +7,7 @@ import {
   cancelFarmerSubscription,
   fetchFarmerSubscriptions,
 } from '@/lib/subscriptions'
-import { fetchSubscriptionPlans } from '@/lib/subscriptionPlans'
+import { fetchSubscriptionPlans, getTierCapWarning, isTierPlan } from '@/lib/subscriptionPlans'
 
 const STATUS_STYLES = {
   active: 'bg-emerald-50 text-emerald-700',
@@ -123,6 +123,16 @@ export default function SubscriptionTab({ farmer, onUpdated }) {
   const selectedFieldHasActiveSub = Boolean(
     form.farmId && activeSubByFieldId.has(form.farmId),
   )
+
+  const selectedField = useMemo(
+    () => farmer.fields?.find((field) => field.id === form.farmId),
+    [farmer.fields, form.farmId],
+  )
+  const selectedPlan = useMemo(
+    () => plans.find((plan) => plan._id === form.planId),
+    [plans, form.planId],
+  )
+  const tierCapWarning = getTierCapWarning(selectedPlan, selectedField?.acre)
 
   const pendingRemainderRows = useMemo(
     () =>
@@ -341,11 +351,39 @@ export default function SubscriptionTab({ farmer, onUpdated }) {
             subscription.
           </p>
         ) : (
-          <form onSubmit={handleActivate} className="mt-5 grid gap-4 lg:grid-cols-4">
+          <>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {farmer.fields.map((field) => {
+                const isUnlocked = activeSubByFieldId.has(field.id)
+                return (
+                  <span
+                    key={field.id}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700"
+                  >
+                    <span
+                      className={clsx(
+                        'h-2 w-2 shrink-0 rounded-full',
+                        isUnlocked ? 'bg-emerald-500' : 'bg-red-500',
+                      )}
+                      title={isUnlocked ? 'Active subscription' : 'Locked — no subscription'}
+                    />
+                    {field.fieldName}
+                  </span>
+                )
+              })}
+            </div>
+
+            <form onSubmit={handleActivate} className="mt-5 grid gap-4 lg:grid-cols-4">
             {selectedFieldHasActiveSub ? (
               <p className="lg:col-span-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                 This field already has an active subscription. Choose a locked
                 field (marked below) to unlock it in the app.
+              </p>
+            ) : null}
+            {tierCapWarning ? (
+              <p className="lg:col-span-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {tierCapWarning} You can still activate it — this is just a
+                heads-up to consider a higher tier.
               </p>
             ) : null}
             <label className="block text-sm">
@@ -387,6 +425,7 @@ export default function SubscriptionTab({ farmer, onUpdated }) {
                 {plans.map((plan) => (
                   <option key={plan._id} value={plan._id}>
                     {plan.name}
+                    {isTierPlan(plan) ? ` — up to ${plan.maxAcres} acre` : ''}
                     {plan.isInternal ? ' (Internal)' : ''}
                   </option>
                 ))}
@@ -421,6 +460,7 @@ export default function SubscriptionTab({ farmer, onUpdated }) {
               </button>
             </div>
           </form>
+          </>
         )}
       </div>
 
@@ -455,7 +495,16 @@ export default function SubscriptionTab({ farmer, onUpdated }) {
                   return (
                     <tr key={row.id} className="text-gray-700">
                       <td className="px-5 py-4">
-                        <p className="font-medium text-gray-900">{row.field.name}</p>
+                        <p className="flex items-center gap-1.5 font-medium text-gray-900">
+                          <span
+                            className={clsx(
+                              'h-2 w-2 shrink-0 rounded-full',
+                              row.status === 'active' ? 'bg-emerald-500' : 'bg-red-500',
+                            )}
+                            title={row.status === 'active' ? 'Active' : 'Locked'}
+                          />
+                          {row.field.name}
+                        </p>
                         <p className="text-xs text-gray-500">
                           {row.acres > 0 ? `${row.acres} ac field` : '—'}
                           {row.cardAcres > 0

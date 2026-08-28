@@ -15,6 +15,8 @@ export const PLAN_FEATURE_KEYS = [
   'diseaseDetectionAlerts',
   'smartAdvisorySystem',
   'soilReportGeneration',
+  'cropCalendar',
+  'zoningAnalysis',
 ]
 
 export const PLAN_FEATURE_LABELS = {
@@ -32,6 +34,8 @@ export const PLAN_FEATURE_LABELS = {
   diseaseDetectionAlerts: 'Disease detection alerts',
   smartAdvisorySystem: 'AI smart advisory system',
   soilReportGeneration: 'Soil report generation',
+  cropCalendar: 'Crop calendar',
+  zoningAnalysis: 'Zoning & VRA analysis',
 }
 
 const DEFAULT_FEATURES = {
@@ -49,6 +53,8 @@ const DEFAULT_FEATURES = {
   diseaseDetectionAlerts: true,
   smartAdvisorySystem: true,
   soilReportGeneration: false,
+  cropCalendar: false,
+  zoningAnalysis: false,
 }
 
 export function getDefaultPlanFeatures() {
@@ -80,8 +86,13 @@ export function slugifyPlanName(name) {
 }
 
 export function buildPlanPayload(form) {
-  const monthlyRupees = Number(form.monthlyPricePerAcre)
-  const yearlyRupees = Number(form.yearlyPricePerAcre)
+  const tierMode = Boolean(form.isTierPlan)
+  const monthlyRupees = Number(
+    tierMode ? form.tierMonthlyPrice : form.monthlyPricePerAcre,
+  )
+  const yearlyRupees = Number(
+    tierMode ? form.tierYearlyPrice : form.yearlyPricePerAcre,
+  )
 
   return {
     name: String(form.name || '').trim(),
@@ -93,6 +104,7 @@ export function buildPlanPayload(form) {
     isTrialEnabled: Boolean(form.isTrialEnabled),
     trialDays: form.isTrialEnabled ? Number(form.trialDays) || 15 : 0,
     active: form.active !== false,
+    maxAcres: tierMode ? Number(form.maxAcres) || null : null,
     pricing: [
       {
         currency: 'INR',
@@ -109,6 +121,21 @@ export function buildPlanPayload(form) {
     ],
     features: { ...DEFAULT_FEATURES, ...(form.features || {}) },
   }
+}
+
+export function isTierPlan(plan) {
+  return Number.isFinite(Number(plan?.maxAcres)) && Number(plan?.maxAcres) > 0
+}
+
+/** Cap check is informational only — BioDrops tiers warn, they don't block. */
+export function getTierCapWarning(plan, fieldAcres) {
+  if (!isTierPlan(plan)) return null
+  const maxAcres = Number(plan.maxAcres)
+  const acres = Number(fieldAcres) || 0
+  if (acres > maxAcres + 0.05) {
+    return `This field is ${acres.toFixed(2)} acre. The ${plan.name} plan covers up to ${maxAcres} acre.`
+  }
+  return null
 }
 
 export function fetchSubscriptionPlans(platform) {

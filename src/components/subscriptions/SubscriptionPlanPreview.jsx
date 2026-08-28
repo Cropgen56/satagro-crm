@@ -4,6 +4,14 @@ import clsx from 'clsx'
 import { Smartphone } from 'lucide-react'
 
 export default function SubscriptionPlanPreview({ form }) {
+  const isTierPlan = Boolean(form.isTierPlan)
+  const monthlyRupees = isTierPlan
+    ? form.tierMonthlyPrice
+    : form.monthlyPricePerAcre
+  const yearlyRupees = isTierPlan
+    ? form.tierYearlyPrice
+    : form.yearlyPricePerAcre
+
   const previewPlan = {
     name: form.name || 'Plan name',
     description: form.description,
@@ -11,12 +19,12 @@ export default function SubscriptionPlanPreview({ form }) {
       {
         currency: 'INR',
         billingCycle: 'monthly',
-        pricePerUnitMinor: Math.round(Number(form.monthlyPricePerAcre || 0) * 100),
+        pricePerUnitMinor: Math.round(Number(monthlyRupees || 0) * 100),
       },
       {
         currency: 'INR',
         billingCycle: 'yearly',
-        pricePerUnitMinor: Math.round(Number(form.yearlyPricePerAcre || 0) * 100),
+        pricePerUnitMinor: Math.round(Number(yearlyRupees || 0) * 100),
       },
     ],
     isTrialEnabled: form.isTrialEnabled,
@@ -35,7 +43,14 @@ export default function SubscriptionPlanPreview({ form }) {
 
       <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 bg-[#E7EFEC]/40 px-4 py-3">
-          <p className="font-semibold text-gray-900">{previewPlan.name}</p>
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold text-gray-900">{previewPlan.name}</p>
+            {isTierPlan ? (
+              <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                Up to {form.maxAcres || '—'} acre
+              </span>
+            ) : null}
+          </div>
           {previewPlan.description ? (
             <p className="mt-1 text-xs text-gray-500 line-clamp-2">
               {previewPlan.description}
@@ -51,7 +66,9 @@ export default function SubscriptionPlanPreview({ form }) {
               </p>
               <p className="mt-0.5 text-sm font-semibold text-gray-900">
                 {formatPricePerAcre(previewPlan, 'monthly')}
-                <span className="text-xs font-normal text-gray-500"> /acre</span>
+                {isTierPlan ? null : (
+                  <span className="text-xs font-normal text-gray-500"> /acre</span>
+                )}
               </p>
             </div>
             <div className="rounded-xl bg-gray-50 px-3 py-2">
@@ -60,10 +77,15 @@ export default function SubscriptionPlanPreview({ form }) {
               </p>
               <p className="mt-0.5 text-sm font-semibold text-gray-900">
                 {formatPricePerAcre(previewPlan, 'yearly')}
-                <span className="text-xs font-normal text-gray-500"> /acre</span>
+                {isTierPlan ? null : (
+                  <span className="text-xs font-normal text-gray-500"> /acre</span>
+                )}
               </p>
             </div>
           </div>
+          {isTierPlan ? (
+            <p className="text-xs text-gray-400">Flat package price</p>
+          ) : null}
 
           {previewPlan.isTrialEnabled ? (
             <p className="rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">

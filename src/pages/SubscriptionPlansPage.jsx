@@ -9,6 +9,7 @@ import {
   deleteSubscriptionPlan,
   fetchSubscriptionPlans,
   formatPricePerAcre,
+  isTierPlan,
   PLAN_FEATURE_KEYS,
 } from '@/lib/subscriptionPlans'
 import {
@@ -220,6 +221,11 @@ export default function SubscriptionPlansPage() {
                         Internal
                       </span>
                     ) : null}
+                    {isTierPlan(plan) ? (
+                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700">
+                        Up to {plan.maxAcres} acre
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
@@ -228,7 +234,7 @@ export default function SubscriptionPlansPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-gray-50 px-3 py-2.5">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                      Monthly / acre
+                      {isTierPlan(plan) ? 'Monthly package' : 'Monthly / acre'}
                     </p>
                     <p className="mt-1 text-sm font-semibold text-gray-900">
                       {formatPricePerAcre(plan, 'monthly')}
@@ -236,7 +242,7 @@ export default function SubscriptionPlansPage() {
                   </div>
                   <div className="rounded-xl bg-gray-50 px-3 py-2.5">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                      Yearly / acre
+                      {isTierPlan(plan) ? 'Yearly package' : 'Yearly / acre'}
                     </p>
                     <p className="mt-1 text-sm font-semibold text-gray-900">
                       {formatPricePerAcre(plan, 'yearly')}

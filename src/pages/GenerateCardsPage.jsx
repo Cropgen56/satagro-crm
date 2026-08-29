@@ -209,8 +209,11 @@ export default function GenerateCardsPage() {
                 onChange={(e) => update('durationMonths', e.target.value)}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
               >
-                <option value="6">6 months</option>
-                <option value="12">12 months</option>
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                  <option key={m} value={m}>
+                    {m} {m === 1 ? 'month' : 'months'}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

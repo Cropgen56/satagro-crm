@@ -1,14 +1,8 @@
 import {
-  Bell,
-  ClipboardList,
   CreditCard,
-  FileBarChart,
   LayoutDashboard,
-  Leaf,
-  ListTodo,
   Settings,
   ShoppingBag,
-  Target,
   Tractor,
   UserCog,
 } from 'lucide-react'
@@ -41,12 +35,13 @@ export const mainNav = [
   { label: 'Farmers', path: '/farmers', icon: Tractor },
   subscriptionNav,
   ecommerceNav,
-  { label: 'Leads', path: '/leads', icon: Target },
-  { label: 'Activities', path: '/activities', icon: ClipboardList },
-  { label: 'Tasks', path: '/tasks', icon: ListTodo },
-  { label: 'Advisories', path: '/advisories', icon: Leaf },
-  { label: 'Notifications', path: '/notifications', icon: Bell },
-  { label: 'Reports', path: '/reports', icon: FileBarChart },
+  // Leads / Activities / Tasks: removed from the sidebar per request. Pages
+  // and routes are untouched (unlike Advisories/Notifications/Reports below,
+  // which are hidden because they're non-functional placeholders) — these
+  // are real, working pages, just no longer linked from the nav.
+  // Advisories / Notifications / Reports: hidden for now — each page is an
+  // always-empty placeholder ("... will appear once connected to live data"),
+  // not wired to any real API yet.
 ]
 
 export const secondaryNav = [

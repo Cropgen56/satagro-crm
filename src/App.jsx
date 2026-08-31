@@ -4,7 +4,8 @@ import RootRedirect from '@/components/auth/RootRedirect'
 import { LoginGuestRoute, OtpGuestRoute } from '@/components/auth/GuestRoute'
 import DashboardLayout from '@/components/layout/DashboardLayout'
 import DashboardPage from '@/pages/DashboardPage'
-import EmptyPage from '@/pages/EmptyPage'
+// EmptyPage: generic dev placeholder route, not linked from any real nav — hidden for now.
+// import EmptyPage from '@/pages/EmptyPage'
 import AddFarmerPage from '@/pages/AddFarmerPage'
 import FarmerDetailPage from '@/pages/FarmerDetailPage'
 import AddLeadPage from '@/pages/AddLeadPage'
@@ -22,24 +23,31 @@ import LoginPage from '@/pages/LoginPage'
 import OtpPage from '@/pages/OtpPage'
 import AcceptInvitationPage from '@/pages/AcceptInvitationPage'
 import AccessDeniedPage from '@/pages/AccessDeniedPage'
-import AdvisoryPage from '@/pages/AdvisoryPage'
-import Notificationspage from '@/pages/Notificationspage'
-import Reportpage from '@/pages/Reportpage'
+// AdvisoryPage / Notificationspage / Reportpage: always-empty placeholders
+// ("... will appear once connected to live data") — hidden for now.
+// import AdvisoryPage from '@/pages/AdvisoryPage'
+// import Notificationspage from '@/pages/Notificationspage'
+// import Reportpage from '@/pages/Reportpage'
 import ProfilePage from '@/pages/ProfilePage'
 import SettingsPage from '@/pages/SettingsPage'
 import UserManagementPage from '@/pages/UserManagementPage'
 import InviteUserPage from '@/pages/InviteUserPage'
-import RoleAssignPage from '@/pages/RoleAssignPage'
-import RegionRulesPage from '@/pages/RegionRulesPage'
-import RegionAssignPage from '@/pages/RegionAssignPage'
-import PermissionReviewPage from '@/pages/PermissionReviewPage'
+// RoleAssignPage / RegionRulesPage / RegionAssignPage / PermissionReviewPage /
+// RoleSettingsPage / CreateRolePage / ConfigurePermissionsPage: a self-contained
+// "roles & permissions" mockup chain with zero real API calls (hardcoded
+// numbers/matrices, "will appear when connected to the API" placeholders) and
+// not linked from any reachable nav or button — hidden for now.
+// import RoleAssignPage from '@/pages/RoleAssignPage'
+// import RegionRulesPage from '@/pages/RegionRulesPage'
+// import RegionAssignPage from '@/pages/RegionAssignPage'
+// import PermissionReviewPage from '@/pages/PermissionReviewPage'
 import InvitationSentPage from '@/pages/InvitationSentPage'
 import PendingInvitationPage from '@/pages/PendingInvitationPage'
 import UserDetailPage from '@/pages/UserDetailPage'
 import EditUserPage from '@/pages/EditUserPage'
-import RoleSettingsPage from '@/pages/RoleSettingsPage'
-import CreateRolePage from '@/pages/CreateRolePage'
-import ConfigurePermissionsPage from './pages/ConfigurePermissionsPage'
+// import RoleSettingsPage from '@/pages/RoleSettingsPage'
+// import CreateRolePage from '@/pages/CreateRolePage'
+// import ConfigurePermissionsPage from './pages/ConfigurePermissionsPage'
 import SubscriptionPage from '@/pages/SubscriptionPage'
 import SubscriptionPlansPage from '@/pages/SubscriptionPlansPage'
 import SubscriptionPlanFormPage from '@/pages/SubscriptionPlanFormPage'
@@ -91,7 +99,7 @@ export default function App() {
           <Route path="/ecommerce/orders/:id" element={<OrderDetailPage />} />
           <Route path="/ecommerce/payments" element={<EcommercePaymentsPage />} />
           <Route path="/ecommerce/invoices" element={<EcommerceInvoicesPage />} />
-          <Route path="/region-rules" element={<RegionRulesPage />} />
+          {/* <Route path="/region-rules" element={<RegionRulesPage />} /> */}
           <Route path="/leads" element={<LeadsPage />} />
           <Route path="/leads/add" element={<AddLeadPage />} />
           <Route path="/leads/:id" element={<LeadDetailPage />} />
@@ -113,24 +121,24 @@ export default function App() {
           <Route path="/subscriptions/cards/:id" element={<AccessCardDetailPage />} />
           <Route path="/subscriptions/cards" element={<AccessCardsPage />} />
           <Route path="/subscriptions/subscribers" element={<SubscribersPage />} />
-          <Route path="/advisories" element={<AdvisoryPage />} />
-          <Route path="/notifications" element={<Notificationspage />} />
-          <Route path="/reports" element={<Reportpage />} />
+          {/* <Route path="/advisories" element={<AdvisoryPage />} /> */}
+          {/* <Route path="/notifications" element={<Notificationspage />} /> */}
+          {/* <Route path="/reports" element={<Reportpage />} /> */}
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/user-management/:id/edit" element={<EditUserPage />} />
           <Route path="/user-management/:id" element={<UserDetailPage />} />
-          <Route path="/create-role" element={<CreateRolePage />} />
-          <Route path="/configure-permissions" element={<ConfigurePermissionsPage />} />
-          <Route path="/role-settings" element={<RoleSettingsPage />} />
+          {/* <Route path="/create-role" element={<CreateRolePage />} /> */}
+          {/* <Route path="/configure-permissions" element={<ConfigurePermissionsPage />} /> */}
+          {/* <Route path="/role-settings" element={<RoleSettingsPage />} /> */}
           <Route path="/user-management" element={<UserManagementPage />} />
           <Route path="/invite-user" element={<InviteUserPage />} />
-          <Route path="/role-assignment" element={<RoleAssignPage />} />
-          <Route path="/region-assignment" element={<RegionAssignPage />} />
-          <Route path="/permissions-review" element={<PermissionReviewPage />} />
+          {/* <Route path="/role-assignment" element={<RoleAssignPage />} /> */}
+          {/* <Route path="/region-assignment" element={<RegionAssignPage />} /> */}
+          {/* <Route path="/permissions-review" element={<PermissionReviewPage />} /> */}
           <Route path="/invitation-sent" element={<InvitationSentPage />} />
           <Route path="/pending-invitation" element={<PendingInvitationPage />} />
-          <Route path="/empty" element={<EmptyPage title="Empty Page" />} />
+          {/* <Route path="/empty" element={<EmptyPage title="Empty Page" />} /> */}
         </Route>
       </Route>
 

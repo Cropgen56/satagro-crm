@@ -32,7 +32,8 @@ export const initialFarmerForm = {
 
 export const FARMER_TABS = [
   { id: 'overview', label: 'Overview' },
-  { id: 'fields', label: 'Fields' },
+  { id: 'fields', label: 'Farm List' },
+  { id: 'reports', label: 'Reports' },
   { id: 'subscription', label: 'Subscription' },
   { id: 'product_cards', label: 'Product cards' },
   { id: 'advisory', label: 'Advisory' },

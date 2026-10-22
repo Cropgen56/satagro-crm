@@ -6,8 +6,8 @@ import {
   setRefreshToken,
 } from '@/lib/auth'
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:7070/v1/api/auth'
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'https://server.cropgenapp.com/v1/api/auth'
 
 const PUBLIC_PATHS = [
   '/biodrops/whatsapp/otp',
@@ -75,8 +75,7 @@ export async function refreshAccessToken() {
     throw new Error(data?.message || 'Session expired')
   }
 
-  const accessToken =
-    data?.accessToken || data?.token || data?.data?.accessToken
+  const accessToken = data?.accessToken || data?.token || data?.data?.accessToken
   if (!accessToken) {
     throw new Error('Session expired')
   }
@@ -101,7 +100,8 @@ function getRefreshOnce() {
 export async function apiRequest(path, options = {}, retry = true) {
   const isPublic = PUBLIC_PATHS.some((p) => path.startsWith(p))
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const url = /^https?:\/\//.test(path) ? path : `${API_BASE_URL}${path}`
+  const response = await fetch(url, {
     method: options.method || 'GET',
     headers: buildHeaders(options.headers),
     credentials: 'include',
@@ -130,8 +130,7 @@ export async function apiRequest(path, options = {}, retry = true) {
   }
 
   if (!response.ok) {
-    const message =
-      data?.message || data?.error || `Request failed with status ${response.status}`
+    const message = data?.message || data?.error || `Request failed with status ${response.status}`
     throw new Error(message)
   }
 

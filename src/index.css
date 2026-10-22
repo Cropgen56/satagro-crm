@@ -96,3 +96,125 @@
     background-color: rgb(209 213 219);
   }
 }
+
+/* Dashboard farm map: hover card and field-name labels */
+.leaflet-tooltip.farm-map-tooltip {
+  padding: 6px 8px;
+  border: none;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  white-space: normal;
+}
+
+.leaflet-tooltip.farm-map-tooltip::before {
+  display: none;
+}
+
+.farm-map-tooltip .fmt-card {
+  width: 220px;
+  font-family: inherit;
+  color: #1f2937;
+}
+
+.farm-map-tooltip .fmt-head {
+  margin: -6px -8px 8px;
+  padding: 8px 10px;
+  border-radius: 10px 10px 0 0;
+}
+
+.farm-map-tooltip .fmt-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.farm-map-tooltip .fmt-sub {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.farm-map-tooltip .fmt-owner {
+  margin-bottom: 8px;
+}
+
+.farm-map-tooltip .fmt-owner-name {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.farm-map-tooltip .fmt-owner-phone {
+  margin: 0;
+  font-size: 9px;
+  color: #6b7280;
+}
+
+.farm-map-tooltip .fmt-stats {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.farm-map-tooltip .fmt-stats > div {
+  flex: 1;
+  padding: 4px 5px;
+  border-radius: 6px;
+  background: #f0fdf4;
+  text-align: center;
+}
+
+.farm-map-tooltip .fmt-stats span {
+  display: block;
+  font-size: 8px;
+  color: #9ca3af;
+}
+
+.farm-map-tooltip .fmt-stats b {
+  display: block;
+  font-size: 10px;
+  color: #15803d;
+}
+
+.farm-map-tooltip .fmt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.farm-map-tooltip .fmt-row span {
+  color: #9ca3af;
+}
+
+.farm-map-tooltip .fmt-row b {
+  max-width: 130px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.farm-map-tooltip .fmt-foot {
+  margin: 7px 0 0;
+  padding-top: 4px;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #16a34a;
+}
+
+.farm-map-label {
+  transform: translate(-50%, -50%);
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.68);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+  pointer-events: none;
+}

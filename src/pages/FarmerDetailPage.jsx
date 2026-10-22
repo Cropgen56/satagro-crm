@@ -1,21 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import clsx from 'clsx'
-import {
-  ArrowLeft,
-  Calendar,
-  Globe,
-  Mail,
-  MapPin,
-  Phone,
-  Sprout,
-  Tractor,
-} from 'lucide-react'
+import { ArrowLeft, Calendar, Globe, Mail, MapPin, Phone, Sprout, Tractor } from 'lucide-react'
 import PageTopBar from '@/components/layout/PageTopBar'
 import FarmerDetailTabs from '@/components/farmer-detail/FarmerDetailTabs'
 import SubscriptionTab from '@/components/farmer-detail/tabs/SubscriptionTab'
 import ProductCardsTab from '@/components/farmer-detail/tabs/ProductCardsTab'
 import AdvisoryTab from '@/components/farmer-detail/tabs/AdvisoryTab'
+import FarmOverviewPanel from '@/components/farmer-detail/analytics/FarmOverviewPanel'
+import FarmListPanel from '@/components/farmer-detail/analytics/FarmListPanel'
+import FieldReportPanel from '@/components/farmer-detail/analytics/FieldReportPanel'
+import FarmSelector from '@/components/farmer-detail/analytics/FarmSelector'
+import useAsyncData from '@/hooks/useAsyncData'
+import { fetchFarmerFields } from '@/lib/farmAnalytics'
 import StatusBadge from '@/components/farmers/StatusBadge'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import RecordNotFoundPage from '@/pages/RecordNotFoundPage'
@@ -31,9 +28,7 @@ function formatDate(value) {
 }
 
 function formatLocationParts(farmer) {
-  return [farmer.village, farmer.district, farmer.state, farmer.country]
-    .filter(Boolean)
-    .join(', ')
+  return [farmer.village, farmer.district, farmer.state, farmer.country].filter(Boolean).join(', ')
 }
 
 function SummaryCard({ icon: Icon, label, value, note, iconBg, iconColor }) {
@@ -41,18 +36,11 @@ function SummaryCard({ icon: Icon, label, value, note, iconBg, iconColor }) {
     <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            {label}
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
           {note ? <p className="mt-1 text-xs text-gray-500">{note}</p> : null}
         </div>
-        <span
-          className={clsx(
-            'flex h-10 w-10 items-center justify-center rounded-xl',
-            iconBg,
-          )}
-        >
+        <span className={clsx('flex h-10 w-10 items-center justify-center rounded-xl', iconBg)}>
           <Icon className={clsx('h-5 w-5', iconColor)} />
         </span>
       </div>
@@ -79,10 +67,7 @@ function OverviewPanel({ farmer }) {
           <InfoRow label="Email" value={farmer.email} />
           <InfoRow label="Language" value={farmer.language} />
           <InfoRow label="Client source" value={farmer.clientSource} />
-          <InfoRow
-            label="Terms accepted"
-            value={farmer.termsAccepted ? 'Yes' : 'No'}
-          />
+          <InfoRow label="Terms accepted" value={farmer.termsAccepted ? 'Yes' : 'No'} />
           <InfoRow label="Joined" value={formatDate(farmer.createdAt)} />
           <InfoRow label="Last login" value={formatDate(farmer.lastLoginAt)} />
           <InfoRow label="Last active" value={farmer.lastAdvisory} />
@@ -103,103 +88,6 @@ function OverviewPanel({ farmer }) {
           {formatLocationParts(farmer) || farmer.location || 'No location added'}
         </p>
       </div>
-
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm lg:col-span-2">
-        <h3 className="text-sm font-semibold text-gray-900">Farm Summary</h3>
-        <div className="mt-4 grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg bg-[#F7FAF9] px-4 py-3">
-            <p className="text-xs text-gray-500">Total farms added</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">
-              {farmer.fieldCount}
-            </p>
-          </div>
-          <div className="rounded-lg bg-[#F7FAF9] px-4 py-3">
-            <p className="text-xs text-gray-500">Total acreage</p>
-            <p className="mt-1 text-xl font-bold text-gray-900">
-              {farmer.totalAcre > 0 ? `${farmer.totalAcre.toFixed(1)} ac` : '—'}
-            </p>
-          </div>
-          <div className="rounded-lg bg-[#F7FAF9] px-4 py-3">
-            <p className="text-xs text-gray-500">Crops</p>
-            <p className="mt-1 text-sm font-semibold text-gray-900">
-              {farmer.crops?.length ? farmer.crops.join(', ') : '—'}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function FieldsPanel({ farmer }) {
-  if (!farmer.fields?.length) {
-    return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center shadow-sm">
-        <Sprout className="mx-auto h-10 w-10 text-gray-300" />
-        <p className="mt-3 text-sm font-medium text-gray-700">No farms added yet</p>
-        <p className="mt-1 text-sm text-gray-500">
-          This farmer has not registered any farm plots in the app.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-      <div className="border-b border-gray-100 px-6 py-4">
-        <h3 className="text-sm font-semibold text-gray-900">
-          Farms added ({farmer.fields.length})
-        </h3>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-left">
-          <thead>
-            <tr className="border-b border-gray-100 bg-gray-50/80 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              <th className="px-5 py-3.5">Farm name</th>
-              <th className="px-5 py-3.5">Crop</th>
-              <th className="px-5 py-3.5">Variety</th>
-              <th className="px-5 py-3.5">Area</th>
-              <th className="px-5 py-3.5">Sowing</th>
-              <th className="px-5 py-3.5">Irrigation</th>
-              <th className="px-5 py-3.5">Farming type</th>
-              <th className="px-5 py-3.5">Status</th>
-              <th className="px-5 py-3.5">Added</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {farmer.fields.map((field) => (
-              <tr key={field.id} className="text-sm text-gray-700">
-                <td className="px-5 py-4 font-medium text-gray-900">
-                  {field.fieldName}
-                </td>
-                <td className="px-5 py-4">{field.cropName}</td>
-                <td className="px-5 py-4">{field.variety}</td>
-                <td className="px-5 py-4">
-                  {field.acre > 0 ? `${field.acre.toFixed(1)} ac` : '—'}
-                </td>
-                <td className="px-5 py-4">{field.sowingDate}</td>
-                <td className="px-5 py-4">{field.typeOfIrrigation}</td>
-                <td className="px-5 py-4">{field.typeOfFarming}</td>
-                <td className="px-5 py-4">
-                  <span
-                    className={clsx(
-                      'rounded-full px-2.5 py-1 text-xs font-medium',
-                      field.isBarrenLand
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-green-50 text-green-700',
-                    )}
-                  >
-                    {field.isBarrenLand ? 'Barren land' : 'Active crop'}
-                  </span>
-                </td>
-                <td className="px-5 py-4 text-gray-500">
-                  {formatDate(field.createdAt)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   )
 }
@@ -219,6 +107,16 @@ export default function FarmerDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
+  const location = useLocation()
+  const [selectedFieldId, setSelectedFieldId] = useState(location.state?.fieldId || '')
+  const [fieldsVersion, setFieldsVersion] = useState(0)
+
+  const farmerId = farmer?.id
+  const fieldsQuery = useAsyncData(farmerId ? `fields:${farmerId}:${fieldsVersion}` : null, () =>
+    fetchFarmerFields(farmerId),
+  )
+  const fields = useMemo(() => fieldsQuery.data || [], [fieldsQuery.data])
+  const selectedField = fields.find((f) => f._id === selectedFieldId) || fields[0] || null
 
   const loadFarmer = useCallback(async () => {
     if (!id) return
@@ -237,6 +135,11 @@ export default function FarmerDetailPage() {
 
   useEffect(() => {
     loadFarmer()
+  }, [loadFarmer])
+
+  const handleSubscriptionUpdated = useCallback(() => {
+    setFieldsVersion((v) => v + 1)
+    return loadFarmer()
   }, [loadFarmer])
 
   if (loading) {
@@ -337,6 +240,10 @@ export default function FarmerDetailPage() {
                     <MapPin className="h-4 w-4 text-gray-400" />
                     {formatLocationParts(farmer) || farmer.location || '—'}
                   </span>
+                  <span className="inline-flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    Joined {formatDate(farmer.createdAt)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -350,23 +257,55 @@ export default function FarmerDetailPage() {
         </div>
 
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          {fields.length ? (
+            <div className="mb-4 flex justify-end">
+              <FarmSelector
+                fields={fields}
+                selectedField={selectedField}
+                onSelect={setSelectedFieldId}
+              />
+            </div>
+          ) : null}
           <FarmerDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
           <div className="mt-6">
-            {activeTab === 'overview' ? <OverviewPanel farmer={farmer} /> : null}
-            {activeTab === 'fields' ? <FieldsPanel farmer={farmer} /> : null}
+            {activeTab === 'overview' ? (
+              <div className="space-y-6">
+                <FarmOverviewPanel
+                  farmer={farmer}
+                  fields={fields}
+                  selectedField={selectedField}
+                  fieldsLoading={fieldsQuery.loading}
+                  fieldsError={fieldsQuery.error}
+                />
+                <OverviewPanel farmer={farmer} />
+              </div>
+            ) : null}
+            {activeTab === 'fields' ? (
+              <FarmListPanel
+                fields={fields}
+                loading={fieldsQuery.loading}
+                error={fieldsQuery.error}
+                onViewReport={(fieldId) => {
+                  setSelectedFieldId(fieldId)
+                  setActiveTab('reports')
+                }}
+              />
+            ) : null}
+            {activeTab === 'reports' ? (
+              <FieldReportPanel
+                loading={fieldsQuery.loading}
+                error={fieldsQuery.error}
+                field={selectedField}
+                onManageSubscription={() => setActiveTab('subscription')}
+              />
+            ) : null}
             {activeTab === 'subscription' ? (
-              <SubscriptionTab farmer={farmer} onUpdated={loadFarmer} />
+              <SubscriptionTab farmer={farmer} onUpdated={handleSubscriptionUpdated} />
             ) : null}
-            {activeTab === 'product_cards' ? (
-              <ProductCardsTab farmer={farmer} />
-            ) : null}
-            {activeTab === 'advisory' ? (
-              <AdvisoryTab farmer={farmer} />
-            ) : null}
-            {activeTab === 'activity' ? (
-              <PlaceholderPanel title="Activity history" />
-            ) : null}
+            {activeTab === 'product_cards' ? <ProductCardsTab farmer={farmer} /> : null}
+            {activeTab === 'advisory' ? <AdvisoryTab farmer={farmer} /> : null}
+            {activeTab === 'activity' ? <PlaceholderPanel title="Activity history" /> : null}
           </div>
         </div>
       </div>

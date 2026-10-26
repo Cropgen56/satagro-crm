@@ -1,17 +1,16 @@
 // SettingsPage.jsx
 
 import React from 'react'
-import PageTopBar from '@/components/layout/PageTopBar'
 import { useAuth } from '@/hooks/useAuth'
 
 import SettingsHeader from '@/components/settings/SettingsHeader'
-import SettingsSidebar from '@/components/settings/SettingsSidebar'
 import OrganizationInformationCard from '@/components/settings/OrganizationInformationCard'
+import ClientOrganizationCard from '@/components/settings/ClientOrganizationCard'
 import RegionalPreferencesCard from '@/components/settings/RegionalPreferencesCard'
 import SystemPreferencesCard from '@/components/settings/SystemPreferencesCard'
 
 const SettingsPage = () => {
-  const { user, roleLabel, assignments } = useAuth()
+  const { user, roleLabel, assignments, isClientViewer, clientOrganization } = useAuth()
 
   const userDetails = [
     { label: 'Full Name', value: [user?.firstName, user?.lastName].filter(Boolean).join(' ') },
@@ -32,28 +31,32 @@ const SettingsPage = () => {
       value: user?.lastActiveAt ? new Date(user.lastActiveAt).toLocaleString() : null,
     },
     { label: 'Joined On', value: user?.createdAt ? new Date(user.createdAt).toLocaleString() : null },
-    {
-      label: 'Admin Assignments',
-      value: Array.isArray(assignments) && assignments.length > 0 ? String(assignments.length) : '0',
-    },
+    // Client logins never have admin assignments.
+    ...(isClientViewer
+      ? []
+      : [
+          {
+            label: 'Admin Assignments',
+            value:
+              Array.isArray(assignments) && assignments.length > 0
+                ? String(assignments.length)
+                : '0',
+          },
+        ]),
   ]
 
   return (
     <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
-      <PageTopBar />
+      <SettingsHeader />
 
-      <div className="mt-8">
-        <SettingsHeader />
-      </div>
-
-      <div className="mt-7 grid grid-cols-1 gap-6 xl:grid-cols-[300px_1fr]">
-        <SettingsSidebar />
-
-        <div className="space-y-6">
+      <div className="mt-7 space-y-6">
+        {isClientViewer ? (
+          <ClientOrganizationCard organization={clientOrganization} />
+        ) : (
           <OrganizationInformationCard user={user} />
-          <RegionalPreferencesCard user={user} />
-          <SystemPreferencesCard userDetails={userDetails} />
-        </div>
+        )}
+        <RegionalPreferencesCard user={user} />
+        <SystemPreferencesCard userDetails={userDetails} />
       </div>
     </div>
   )

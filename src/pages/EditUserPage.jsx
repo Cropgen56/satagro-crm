@@ -1,5 +1,4 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import EditUserForm from '@/components/usermanagement/EditUserForm'
 import { ArrowLeft } from 'lucide-react'
 
@@ -9,8 +8,6 @@ export default function EditUserPage() {
 
   return (
     <div className="min-h-full bg-[#F6F8F7] p-6 lg:p-8">
-      <PageTopBar />
-
       <button
         type="button"
         onClick={() => navigate('/user-management')}

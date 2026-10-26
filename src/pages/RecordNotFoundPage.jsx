@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import EmptyState from '@/components/ui/EmptyState'
 import { FileQuestion } from 'lucide-react'
 
@@ -8,8 +7,7 @@ export default function RecordNotFoundPage({ backTo = '/dashboard', label = 'Rec
 
   return (
     <div className="min-h-full p-6 lg:p-8">
-      <PageTopBar />
-      <div className="mt-8">
+      <div>
         <EmptyState
           icon={FileQuestion}
           title={`${label} not found`}

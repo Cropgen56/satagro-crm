@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Settings2 } from 'lucide-react'
 import FormSection from '@/components/add-farmer/FormSection'
-import PageTopBar from '@/components/layout/PageTopBar'
 import ProductForm, { productToForm } from '@/components/products/ProductForm'
 import ProductPreview from '@/components/products/ProductPreview'
 import { createProduct, fetchProductById, updateProduct } from '@/lib/products'
@@ -84,9 +83,7 @@ export default function ProductFormPage() {
         Back to products
       </Link>
 
-      <PageTopBar />
-
-      <header className="mt-4">
+      <header>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-brand-primary/70">

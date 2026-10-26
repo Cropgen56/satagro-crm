@@ -1,4 +1,3 @@
-import PageTopBar from '@/components/layout/PageTopBar'
 
 export default function EcommercePageShell({
   section,
@@ -10,9 +9,7 @@ export default function EcommercePageShell({
 }) {
   return (
     <div className="min-h-full p-6 lg:p-8">
-      <PageTopBar />
-
-      <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-brand-primary/70">
             Ecommerce · {section}

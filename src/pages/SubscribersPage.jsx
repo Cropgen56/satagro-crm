@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import EmptyState from '@/components/ui/EmptyState'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import { fetchSubscribers } from '@/lib/subscriptions'
@@ -99,9 +98,7 @@ export default function SubscribersPage() {
 
   return (
     <div className="min-h-full p-6 lg:p-8">
-      <PageTopBar />
-
-      <header className="mt-4">
+      <header>
         <h1 className="text-2xl font-bold tracking-tight text-brand-primary lg:text-[28px]">
           Subscribers
         </h1>

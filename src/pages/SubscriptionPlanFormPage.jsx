@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import FormSection from '@/components/add-farmer/FormSection'
-import PageTopBar from '@/components/layout/PageTopBar'
 import SubscriptionPlanFeatureToggles from '@/components/subscriptions/SubscriptionPlanFeatureToggles'
 import SubscriptionPlanPreview from '@/components/subscriptions/SubscriptionPlanPreview'
 import {
@@ -173,9 +172,7 @@ export default function SubscriptionPlanFormPage() {
         Back to plans
       </Link>
 
-      <PageTopBar />
-
-      <header className="mt-4">
+      <header>
         <h1 className="text-2xl font-bold tracking-tight text-brand-primary lg:text-[28px]">
           {isEdit ? 'Edit subscription plan' : 'Create subscription plan'}
         </h1>

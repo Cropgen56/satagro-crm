@@ -13,7 +13,6 @@ import {
   Tractor,
   Wheat,
 } from 'lucide-react'
-import PageTopBar from '@/components/layout/PageTopBar'
 import FarmerDetailTabs from '@/components/farmer-detail/FarmerDetailTabs'
 import SubscriptionTab from '@/components/farmer-detail/tabs/SubscriptionTab'
 import ProductCardsTab from '@/components/farmer-detail/tabs/ProductCardsTab'
@@ -233,8 +232,7 @@ function ProfilePanel({ farmer, canManageClients, onClientChange }) {
 function PageShell({ children }) {
   return (
     <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
-      <PageTopBar />
-      <div className="mx-auto mt-6 max-w-[1400px] space-y-6">{children}</div>
+      <div className="mx-auto max-w-[1400px] space-y-6">{children}</div>
     </div>
   )
 }

@@ -6,6 +6,7 @@ import {
   ShoppingBag,
   Tractor,
   UserCog,
+  UserRound,
 } from 'lucide-react'
 
 export const subscriptionNav = {
@@ -36,13 +37,6 @@ export const mainNav = [
   { label: 'Farmers', path: '/farmers', icon: Tractor },
   subscriptionNav,
   ecommerceNav,
-  // Leads / Activities / Tasks: removed from the sidebar per request. Pages
-  // and routes are untouched (unlike Advisories/Notifications/Reports below,
-  // which are hidden because they're non-functional placeholders) — these
-  // are real, working pages, just no longer linked from the nav.
-  // Advisories / Notifications / Reports: hidden for now — each page is an
-  // always-empty placeholder ("... will appear once connected to live data"),
-  // not wired to any real API yet.
 ]
 
 export const secondaryNav = [
@@ -55,19 +49,30 @@ export const clientsNav = { label: 'Clients', path: '/clients', icon: Building2 
 /** Client viewers only monitor their farmers; everything else is hidden. */
 const CLIENT_VIEWER_NAV_PATHS = new Set(['/dashboard', '/farmers'])
 
+/** Client viewers' own account pages (read-only). */
+const clientViewerAccountNav = [
+  { label: 'Settings', path: '/settings', icon: Settings },
+  { label: 'Profile', path: '/profile', icon: UserRound },
+]
+
 export function getMainNav({ isClientViewer = false } = {}) {
   if (!isClientViewer) return mainNav
   return mainNav.filter((item) => CLIENT_VIEWER_NAV_PATHS.has(item.path))
 }
 
 export function getSecondaryNav({ isClientViewer = false, canManageClients = false } = {}) {
-  if (isClientViewer) return []
+  if (isClientViewer) return clientViewerAccountNav
   return canManageClients ? [clientsNav, ...secondaryNav] : secondaryNav
 }
 
-/** Pages a client viewer may open: dashboard, farmer list/detail, own profile. */
+/** Pages a client viewer may open: dashboard, farmer list/detail, settings, profile. */
 export function isClientViewerPathAllowed(pathname) {
-  if (pathname === '/dashboard' || pathname === '/farmers' || pathname === '/profile') {
+  if (
+    pathname === '/dashboard' ||
+    pathname === '/farmers' ||
+    pathname === '/settings' ||
+    pathname === '/profile'
+  ) {
     return true
   }
   return /^\/farmers\/(?!add(?:\/|$))[^/]+\/?$/.test(pathname)

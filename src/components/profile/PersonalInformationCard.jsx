@@ -5,11 +5,13 @@ const fieldClass =
   'h-[56px] w-full rounded-2xl border border-[#CAD3CF] bg-gray-50 px-4 text-[16px] text-[#1F2937] outline-none'
 
 export default function PersonalInformationCard() {
-  const { user, displayName } = useAuth()
+  const { user, displayName, clientOrganization } = useAuth()
 
+  // Client logins belong to their client org, not the BioDrops parent.
+  const organization = clientOrganization || user?.organization
   const orgName =
-    user?.organization?.organizationName ||
-    user?.organization?.organizationCode ||
+    organization?.organizationName ||
+    organization?.organizationCode ||
     '—'
 
   return (
@@ -61,11 +63,26 @@ export default function PersonalInformationCard() {
           </h3>
         </div>
 
-        <div className="mt-7">
-          <label className="mb-2 block text-[14px] font-semibold text-brand-primary">
-            Organization
-          </label>
-          <input value={orgName} readOnly className={fieldClass} />
+        <div className="mt-7 grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div>
+            <label className="mb-2 block text-[14px] font-semibold text-brand-primary">
+              Organization
+            </label>
+            <input value={orgName} readOnly className={fieldClass} />
+          </div>
+
+          {clientOrganization ? (
+            <div>
+              <label className="mb-2 block text-[14px] font-semibold text-brand-primary">
+                Organization Code
+              </label>
+              <input
+                value={clientOrganization.organizationCode || '—'}
+                readOnly
+                className={`${fieldClass} font-mono`}
+              />
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

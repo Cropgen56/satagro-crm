@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import EmptyState from '@/components/ui/EmptyState'
 import SubscriptionPlanFeatureSummary, {
   SubscriptionPlanFeatureCount,
@@ -95,9 +94,7 @@ export default function SubscriptionPlansPage() {
         Back to subscriptions
       </Link>
 
-      <PageTopBar />
-
-      <header className="mt-4 flex flex-wrap items-start justify-between gap-4">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-brand-primary lg:text-[28px]">
             Subscription plans

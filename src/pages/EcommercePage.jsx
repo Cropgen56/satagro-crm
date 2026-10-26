@@ -7,7 +7,6 @@ import {
   ShoppingBag,
 } from 'lucide-react'
 import clsx from 'clsx'
-import PageTopBar from '@/components/layout/PageTopBar'
 
 const cards = [
   {
@@ -47,9 +46,7 @@ const cards = [
 export default function EcommercePage() {
   return (
     <div className="min-h-full p-6 lg:p-8">
-      <PageTopBar />
-
-      <header className="mt-4">
+      <header>
         <p className="text-xs font-semibold uppercase tracking-widest text-brand-primary/70">
           Ecommerce
         </p>

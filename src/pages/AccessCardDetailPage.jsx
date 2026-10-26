@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import ProductAccessCard from '@/components/subscriptions/ProductAccessCard'
 import {
   fetchAccessCardById,
@@ -136,9 +135,7 @@ export default function AccessCardDetailPage() {
         Back to cards
       </Link>
 
-      <PageTopBar />
-
-      <header className="no-print mt-4 flex flex-wrap items-start justify-between gap-3">
+      <header className="no-print flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold tracking-tight text-brand-primary">

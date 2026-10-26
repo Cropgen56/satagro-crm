@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import clsx from 'clsx'
 import { Building2, Check, Copy, Plus, X } from 'lucide-react'
-import PageTopBar from '@/components/layout/PageTopBar'
 import EmptyState from '@/components/ui/EmptyState'
 import { createClient, fetchClients, updateClient } from '@/lib/clients'
 import { useAuth } from '@/hooks/useAuth'
@@ -253,9 +252,7 @@ function ClientsManager() {
 
   return (
     <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
-      <PageTopBar />
-
-      <div className="mx-auto mt-6 max-w-[1400px] space-y-6">
+      <div className="mx-auto max-w-[1400px] space-y-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-brand-primary lg:text-[26px]">

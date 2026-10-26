@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import UserDetailHeader from '@/components/usermanagement/userdetails/UserDetailHeader'
-import UserDetailTabs from '@/components/usermanagement/userdetails/UserDetailTabs'
 import UserDetailOverview from '@/components/usermanagement/userdetails/UserDetailOverview'
 import {
   fetchUserById,
@@ -86,9 +84,7 @@ export default function UserDetailPage() {
 
   return (
     <div key={id} className="min-h-full bg-[#F6F8F7] p-6 lg:p-8">
-      <PageTopBar />
-
-      <div className="mt-8">
+      <div>
         <UserDetailHeader
           user={userData}
           loading={loading}
@@ -116,10 +112,6 @@ export default function UserDetailPage() {
       </div>
 
       <div className="mt-6">
-        <UserDetailTabs />
-      </div>
-
-      <div className="mt-5">
         {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
         <UserDetailOverview user={userData} assignments={assignments} />
       </div>

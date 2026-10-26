@@ -8,7 +8,6 @@ import {
   Info,
   AlertCircle,
   Check,
-  X,
   ChevronDown,
   ArrowRight,
 } from 'lucide-react'
@@ -38,13 +37,6 @@ import {
   filterStatesForActor,
   getDefaultGeoForActor,
 } from '@/lib/adminHierarchy'
-
-const permissions = [
-  { label: 'Create Farmer Records', allowed: true },
-  { label: 'Update Crop Life Cycle', allowed: true },
-  { label: 'Access District Reports', allowed: true },
-  { label: 'Delete Organization Data', allowed: false },
-]
 
 export default function InviteUserForm() {
   const navigate = useNavigate()
@@ -725,25 +717,6 @@ export default function InviteUserForm() {
           <p className="mt-3 text-[13px] leading-6 text-[#4B5563]">
             {roleMeta.desc} Scope is enforced by admin level and region codes on the server.
           </p>
-
-          <div className="my-5 border-t border-[#E5E7EB]" />
-
-          <h4 className="text-[13px] font-semibold text-[#1F2937]">
-            Core Permissions:
-          </h4>
-
-          <div className="mt-4 space-y-3">
-            {permissions.map((item) => (
-              <div key={item.label} className="flex items-center gap-3">
-                {item.allowed ? (
-                  <Check className="h-4 w-4 text-[#059669]" />
-                ) : (
-                  <X className="h-4 w-4 text-[#DC2626]" />
-                )}
-                <span className="text-[13px] text-[#4B5563]">{item.label}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="rounded-[22px] bg-gradient-to-br from-brand-primary to-brand-950 p-6 text-white">

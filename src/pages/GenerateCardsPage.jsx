@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import ProductAccessCard from '@/components/subscriptions/ProductAccessCard'
 import GeneratedCardsPanel from '@/components/subscriptions/GeneratedCardsPanel'
 import { cacheGeneratedCardCodes, generateAccessCards } from '@/lib/accessCards'
@@ -105,9 +104,7 @@ export default function GenerateCardsPage() {
         Back to cards
       </Link>
 
-      <PageTopBar />
-
-      <header className="no-print mt-4">
+      <header className="no-print">
         <h1 className="text-2xl font-bold tracking-tight text-brand-primary">
           Generate product cards
         </h1>

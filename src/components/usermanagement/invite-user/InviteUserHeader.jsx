@@ -32,10 +32,6 @@ export default function InviteUserHeader() {
         >
           Back
         </button>
-
-        <button className="rounded-xl border border-[#BFC8C5] bg-white px-5 py-2.5 text-sm font-medium text-[#374151] transition hover:bg-[#F5F7F6]">
-          Save Draft
-        </button>
       </div>
     </header>
   )

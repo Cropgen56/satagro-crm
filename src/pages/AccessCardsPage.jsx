@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import PageTopBar from '@/components/layout/PageTopBar'
 import EmptyState from '@/components/ui/EmptyState'
 import ProductAccessCard from '@/components/subscriptions/ProductAccessCard'
 import { fetchAccessCards } from '@/lib/accessCards'
@@ -59,9 +58,7 @@ export default function AccessCardsPage() {
 
   return (
     <div className="min-h-full p-6 lg:p-8">
-      <PageTopBar />
-
-      <header className="mt-4">
+      <header>
         <h1 className="text-2xl font-bold tracking-tight text-brand-primary">
           Product cards
         </h1>

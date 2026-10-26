@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import PageTopBar from '@/components/layout/PageTopBar'
 import UserManagementHeader from '@/components/usermanagement/UserManagementHeader'
 import UserManagementKpiCards from '@/components/usermanagement/UserManagementKpiCards'
 import UserManagementTable from '@/components/usermanagement/UserManagementTable'
@@ -74,9 +73,7 @@ export default function UserManagementPage() {
 
   return (
     <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
-      <PageTopBar />
-
-      <div className="mx-auto mt-6 max-w-[1400px] space-y-6">
+      <div className="mx-auto max-w-[1400px] space-y-6">
         <UserManagementHeader pendingCount={pendingCount} />
 
         <UserManagementKpiCards stats={stats} loading={statsLoading} />

@@ -197,7 +197,9 @@ export default function Sidebar() {
           <SidebarNavItem key={item.label} item={item} />
         ))}
 
-        {secondaryNav.length > 0 && <SidebarSectionLabel>Administration</SidebarSectionLabel>}
+        {secondaryNav.length > 0 && (
+          <SidebarSectionLabel>{isClientViewer ? 'Account' : 'Administration'}</SidebarSectionLabel>
+        )}
 
         {secondaryNav.map(({ label, path, icon: Icon }) => (
           <NavLink key={path} to={path} className={({ isActive }) => navItemClass(isActive)}>

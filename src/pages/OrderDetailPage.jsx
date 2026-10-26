@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
-import PageTopBar from '@/components/layout/PageTopBar'
 import OrderDetailPanel from '@/components/orders/OrderDetailPanel'
 import { fetchOrderById, updateOrder, cancelOrder } from '@/lib/orders'
 
@@ -60,7 +59,6 @@ export default function OrderDetailPage() {
   if (loading) {
     return (
       <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-        <PageTopBar />
         <p className="text-sm text-gray-500">Loading order...</p>
       </div>
     )
@@ -69,7 +67,6 @@ export default function OrderDetailPage() {
   if (!order) {
     return (
       <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-        <PageTopBar />
         <p className="text-sm text-red-600">{error || 'Order not found'}</p>
       </div>
     )
@@ -77,7 +74,6 @@ export default function OrderDetailPage() {
 
   return (
     <div className="space-y-6 px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-      <PageTopBar />
       <div className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-gray-100 sm:px-5">
         <Link
           to="/ecommerce/orders"

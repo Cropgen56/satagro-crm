@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react'
-import PageTopBar from '@/components/layout/PageTopBar'
 import FarmersPageHeader from '@/components/farmers/FarmersPageHeader'
 import FarmersTable from '@/components/farmers/FarmersTable'
 import FarmerSummaryCard from '@/components/farmers/FarmerSummaryCard'
@@ -116,9 +115,7 @@ export default function FarmersPage() {
 
   return (
     <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
-      <PageTopBar />
-
-      <div className="mx-auto mt-6 max-w-[1400px] space-y-6">
+      <div className="mx-auto max-w-[1400px] space-y-6">
         <FarmersPageHeader />
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

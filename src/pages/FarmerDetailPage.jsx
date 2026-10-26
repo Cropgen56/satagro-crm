@@ -1,7 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import clsx from 'clsx'
-import { ArrowLeft, Calendar, Globe, Mail, MapPin, Phone, Sprout, Tractor } from 'lucide-react'
+import {
+  Building2,
+  Calendar,
+  ChevronRight,
+  Clock,
+  Mail,
+  MapPin,
+  Phone,
+  Sprout,
+  Tractor,
+  Wheat,
+} from 'lucide-react'
 import PageTopBar from '@/components/layout/PageTopBar'
 import FarmerDetailTabs from '@/components/farmer-detail/FarmerDetailTabs'
 import SubscriptionTab from '@/components/farmer-detail/tabs/SubscriptionTab'
@@ -11,12 +22,18 @@ import FarmOverviewPanel from '@/components/farmer-detail/analytics/FarmOverview
 import FarmListPanel from '@/components/farmer-detail/analytics/FarmListPanel'
 import FieldReportPanel from '@/components/farmer-detail/analytics/FieldReportPanel'
 import FarmSelector from '@/components/farmer-detail/analytics/FarmSelector'
+import FarmerClientCard from '@/components/farmer-detail/FarmerClientCard'
 import useAsyncData from '@/hooks/useAsyncData'
+import { useAuth } from '@/hooks/useAuth'
 import { fetchFarmerFields } from '@/lib/farmAnalytics'
+import { fetchFarmerById } from '@/lib/farmers'
+import { CLIENT_VIEWER_FARMER_TAB_IDS, FARMER_TABS } from '@/lib/moduleConstants'
 import StatusBadge from '@/components/farmers/StatusBadge'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import RecordNotFoundPage from '@/pages/RecordNotFoundPage'
-import { fetchFarmerById } from '@/lib/farmers'
+
+/** Tabs that act on one farm: the farm picker is shown only on these. */
+const FARM_SCOPED_TABS = new Set(['overview', 'reports'])
 
 function formatDate(value) {
   if (!value) return '—'
@@ -28,86 +45,208 @@ function formatDate(value) {
 }
 
 function formatLocationParts(farmer) {
-  return [farmer.village, farmer.district, farmer.state, farmer.country].filter(Boolean).join(', ')
+  return [farmer.village, farmer.city, farmer.district, farmer.state, farmer.country]
+    .filter(Boolean)
+    .join(', ')
 }
 
-function SummaryCard({ icon: Icon, label, value, note, iconBg, iconColor }) {
+function formatLabel(value) {
+  if (!value) return null
+  return String(value).replace(/^\w/, (c) => c.toUpperCase())
+}
+
+function HeaderStat({ icon: Icon, label, value, note }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
-          {note ? <p className="mt-1 text-xs text-gray-500">{note}</p> : null}
-        </div>
-        <span className={clsx('flex h-10 w-10 items-center justify-center rounded-xl', iconBg)}>
-          <Icon className={clsx('h-5 w-5', iconColor)} />
-        </span>
+    <div className="flex items-center gap-3 px-5 py-4">
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-light">
+        <Icon className="h-4 w-4 text-brand-primary" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500">{label}</p>
+        <p className="truncate text-base font-semibold text-gray-900">{value}</p>
+        {note ? (
+          <p className="truncate text-xs text-gray-500" title={note}>
+            {note}
+          </p>
+        ) : null}
       </div>
     </div>
+  )
+}
+
+function ContactItem({ icon: Icon, children }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <Icon className="h-4 w-4 shrink-0 text-gray-400" />
+      <span className="truncate">{children}</span>
+    </span>
+  )
+}
+
+function OrganizationBadge({ client }) {
+  return (
+    <span
+      className={clsx(
+        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium',
+        client ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600',
+      )}
+      title={client?.code ? `Organization code ${client.code}` : undefined}
+    >
+      <Building2 className="h-3.5 w-3.5" />
+      {client?.name || 'BioDrops direct'}
+    </span>
+  )
+}
+
+function ProfileHeader({ farmer }) {
+  const location = formatLocationParts(farmer) || farmer.location
+  const crops = farmer.crops || []
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="flex flex-col gap-5 p-6 sm:flex-row sm:items-start">
+        <UserAvatar
+          name={farmer.name}
+          avatar={farmer.avatar}
+          className="h-16 w-16 shrink-0 text-lg sm:h-20 sm:w-20"
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">{farmer.name}</h1>
+            <StatusBadge status={farmer.status} />
+            <OrganizationBadge client={farmer.client} />
+          </div>
+          <p className="mt-1 font-mono text-xs text-gray-400">{farmer.uid}</p>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-600">
+            {farmer.phone && farmer.phone !== '—' ? (
+              <ContactItem icon={Phone}>
+                <a href={`tel:${farmer.phone}`} className="hover:text-brand-primary">
+                  {farmer.phone}
+                </a>
+              </ContactItem>
+            ) : null}
+            {farmer.email ? (
+              <ContactItem icon={Mail}>
+                <a href={`mailto:${farmer.email}`} className="hover:text-brand-primary">
+                  {farmer.email}
+                </a>
+              </ContactItem>
+            ) : null}
+            {location ? <ContactItem icon={MapPin}>{location}</ContactItem> : null}
+            <ContactItem icon={Calendar}>Joined {formatDate(farmer.createdAt)}</ContactItem>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-px border-t border-gray-100 bg-gray-100 lg:grid-cols-4">
+        {[
+          {
+            icon: Tractor,
+            label: 'Farms',
+            value: farmer.fieldCount,
+            note: farmer.fieldCount ? 'Registered plots' : 'No farms yet',
+          },
+          {
+            icon: Sprout,
+            label: 'Total area',
+            value: farmer.totalAcre > 0 ? `${farmer.totalAcre.toFixed(2)} ac` : '—',
+            note: 'Across all farms',
+          },
+          {
+            icon: Wheat,
+            label: 'Crops',
+            value: crops.length || '—',
+            note: crops.length ? crops.join(', ') : 'No crops yet',
+          },
+          {
+            icon: Clock,
+            label: 'Last active',
+            value: farmer.lastAdvisory || '—',
+            note: farmer.lastActiveAt ? formatDate(farmer.lastActiveAt) : 'Never',
+          },
+        ].map((stat) => (
+          <div key={stat.label} className="bg-gray-50/60">
+            <HeaderStat {...stat} />
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 
 function InfoRow({ label, value }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-gray-50 py-3 last:border-0">
+    <div className="grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-4 border-b border-gray-50 py-3 last:border-0">
       <dt className="text-sm text-gray-500">{label}</dt>
-      <dd className="text-right text-sm font-medium text-gray-900">{value || '—'}</dd>
+      <dd className="break-words text-right text-sm font-medium text-gray-900">{value || '—'}</dd>
     </div>
   )
 }
 
-function OverviewPanel({ farmer }) {
+function InfoCard({ title, children }) {
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-900">Contact & Account</h3>
-        <dl className="mt-4">
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
+      <dl className="mt-3">{children}</dl>
+    </div>
+  )
+}
+
+function ProfilePanel({ farmer, canManageClients, onClientChange }) {
+  return (
+    <div className="space-y-6">
+      {canManageClients ? <FarmerClientCard farmer={farmer} onChange={onClientChange} /> : null}
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <InfoCard title="Contact & account">
           <InfoRow label="Phone" value={farmer.phone} />
           <InfoRow label="Email" value={farmer.email} />
-          <InfoRow label="Language" value={farmer.language} />
-          <InfoRow label="Client source" value={farmer.clientSource} />
+          <InfoRow label="Language" value={formatLabel(farmer.language)} />
+          <InfoRow label="Signed up via" value={formatLabel(farmer.clientSource)} />
           <InfoRow label="Terms accepted" value={farmer.termsAccepted ? 'Yes' : 'No'} />
           <InfoRow label="Joined" value={formatDate(farmer.createdAt)} />
           <InfoRow label="Last login" value={formatDate(farmer.lastLoginAt)} />
-          <InfoRow label="Last active" value={farmer.lastAdvisory} />
-        </dl>
-      </div>
+        </InfoCard>
 
-      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-900">Location</h3>
-        <dl className="mt-4">
+        <InfoCard title="Location">
           <InfoRow label="Country" value={farmer.country} />
           <InfoRow label="State" value={farmer.state} />
           <InfoRow label="District" value={farmer.district} />
           <InfoRow label="City" value={farmer.city} />
           <InfoRow label="Village" value={farmer.village} />
-        </dl>
-        <p className="mt-4 flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-3 text-sm text-gray-600">
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-gray-400" />
-          {formatLocationParts(farmer) || farmer.location || 'No location added'}
-        </p>
+          {!canManageClients ? (
+            <InfoRow
+              label="Organization"
+              value={
+                farmer.client
+                  ? `${farmer.client.name}${farmer.client.code ? ` (${farmer.client.code})` : ''}`
+                  : 'BioDrops direct'
+              }
+            />
+          ) : null}
+        </InfoCard>
       </div>
     </div>
   )
 }
 
-function PlaceholderPanel({ title }) {
+function PageShell({ children }) {
   return (
-    <div className="rounded-xl border border-dashed border-gray-200 bg-white px-6 py-12 text-center shadow-sm">
-      <p className="text-sm font-medium text-gray-700">{title}</p>
-      <p className="mt-1 text-sm text-gray-500">This section will be available soon.</p>
+    <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
+      <PageTopBar />
+      <div className="mx-auto mt-6 max-w-[1400px] space-y-6">{children}</div>
     </div>
   )
 }
 
 export default function FarmerDetailPage() {
   const { id } = useParams()
+  const location = useLocation()
+  const { isClientViewer, canManageClients } = useAuth()
   const [farmer, setFarmer] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('overview')
-  const location = useLocation()
   const [selectedFieldId, setSelectedFieldId] = useState(location.state?.fieldId || '')
   const [fieldsVersion, setFieldsVersion] = useState(0)
 
@@ -117,6 +256,15 @@ export default function FarmerDetailPage() {
   )
   const fields = useMemo(() => fieldsQuery.data || [], [fieldsQuery.data])
   const selectedField = fields.find((f) => f._id === selectedFieldId) || fields[0] || null
+
+  const tabs = useMemo(() => {
+    const visible = isClientViewer
+      ? FARMER_TABS.filter((tab) => CLIENT_VIEWER_FARMER_TAB_IDS.has(tab.id))
+      : FARMER_TABS
+    return visible.map((tab) =>
+      tab.id === 'fields' && fields.length ? { ...tab, count: fields.length } : tab,
+    )
+  }, [isClientViewer, fields.length])
 
   const loadFarmer = useCallback(async () => {
     if (!id) return
@@ -144,121 +292,49 @@ export default function FarmerDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
-        <PageTopBar />
-        <div className="mx-auto mt-8 max-w-[1400px] text-sm text-gray-500">
-          Loading farmer profile...
+      <PageShell>
+        <div className="animate-pulse space-y-6" aria-label="Loading farmer profile">
+          <div className="h-5 w-48 rounded bg-gray-200" />
+          <div className="h-52 rounded-2xl bg-white shadow-sm" />
+          <div className="h-[28rem] rounded-2xl bg-white shadow-sm" />
         </div>
-      </div>
+      </PageShell>
     )
   }
 
   if (!farmer) {
-    return <RecordNotFoundPage backTo="/farmers" label="Farmer" />
-  }
-
-  const summaryCards = [
-    {
-      icon: Tractor,
-      label: 'Farms added',
-      value: farmer.fieldCount,
-      note: 'Registered plots',
-      iconBg: 'bg-[#E7EFEC]',
-      iconColor: 'text-brand-primary',
-    },
-    {
-      icon: Sprout,
-      label: 'Total acreage',
-      value: farmer.totalAcre > 0 ? `${farmer.totalAcre.toFixed(1)} ac` : '—',
-      note: 'Across all farms',
-      iconBg: 'bg-amber-50',
-      iconColor: 'text-amber-700',
-    },
-    {
-      icon: Globe,
-      label: 'Crops',
-      value: farmer.crops?.length || 0,
-      note: farmer.crops?.length ? farmer.crops.join(', ') : 'No crops yet',
-      iconBg: 'bg-blue-50',
-      iconColor: 'text-blue-600',
-    },
-    {
-      icon: Calendar,
-      label: 'Last active',
-      value: farmer.lastAdvisory,
-      note: formatDate(farmer.lastActiveAt),
-      iconBg: 'bg-emerald-50',
-      iconColor: 'text-emerald-700',
-    },
-  ]
-
-  return (
-    <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
-      <PageTopBar />
-
-      <div className="mx-auto mt-6 max-w-[1400px] space-y-6">
-        <Link
-          to="/farmers"
-          className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-primary"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to farmers
-        </Link>
-
-        {error ? (
+    // A real failure (network, server) is not the same as "no such farmer".
+    if (error && !/not found|outside your scope/i.test(error)) {
+      return (
+        <PageShell>
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
-        ) : null}
+        </PageShell>
+      )
+    }
+    return <RecordNotFoundPage backTo="/farmers" label="Farmer" />
+  }
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex items-start gap-4">
-              <UserAvatar
-                name={farmer.name}
-                avatar={farmer.avatar}
-                className="h-20 w-20 shrink-0 text-lg"
-              />
-              <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h1 className="text-2xl font-bold text-gray-900">{farmer.name}</h1>
-                  <StatusBadge status={farmer.status} />
-                </div>
-                <p className="mt-1 text-sm text-gray-500">{farmer.uid}</p>
-                <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
-                  <span className="inline-flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    {farmer.phone}
-                  </span>
-                  {farmer.email ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      {farmer.email}
-                    </span>
-                  ) : null}
-                  <span className="inline-flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-400" />
-                    {formatLocationParts(farmer) || farmer.location || '—'}
-                  </span>
-                  <span className="inline-flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    Joined {formatDate(farmer.createdAt)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+  const showFarmSelector = FARM_SCOPED_TABS.has(activeTab) && fields.length > 0
 
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {summaryCards.map((card) => (
-            <SummaryCard key={card.label} {...card} />
-          ))}
-        </div>
+  return (
+    <PageShell>
+      <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-gray-500">
+        <Link to="/farmers" className="font-medium hover:text-brand-primary">
+          Farmers
+        </Link>
+        <ChevronRight className="h-3.5 w-3.5" />
+        <span className="truncate font-medium text-gray-900">{farmer.name}</span>
+      </nav>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          {fields.length ? (
-            <div className="mb-4 flex justify-end">
+      <ProfileHeader farmer={farmer} />
+
+      <section className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-gray-200 px-6 pt-3 lg:flex-row lg:items-center lg:justify-between">
+          <FarmerDetailTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+          {showFarmSelector ? (
+            <div className="pb-3 lg:pb-0">
               <FarmSelector
                 fields={fields}
                 selectedField={selectedField}
@@ -266,49 +342,53 @@ export default function FarmerDetailPage() {
               />
             </div>
           ) : null}
-          <FarmerDetailTabs activeTab={activeTab} onTabChange={setActiveTab} />
-
-          <div className="mt-6">
-            {activeTab === 'overview' ? (
-              <div className="space-y-6">
-                <FarmOverviewPanel
-                  farmer={farmer}
-                  fields={fields}
-                  selectedField={selectedField}
-                  fieldsLoading={fieldsQuery.loading}
-                  fieldsError={fieldsQuery.error}
-                />
-                <OverviewPanel farmer={farmer} />
-              </div>
-            ) : null}
-            {activeTab === 'fields' ? (
-              <FarmListPanel
-                fields={fields}
-                loading={fieldsQuery.loading}
-                error={fieldsQuery.error}
-                onViewReport={(fieldId) => {
-                  setSelectedFieldId(fieldId)
-                  setActiveTab('reports')
-                }}
-              />
-            ) : null}
-            {activeTab === 'reports' ? (
-              <FieldReportPanel
-                loading={fieldsQuery.loading}
-                error={fieldsQuery.error}
-                field={selectedField}
-                onManageSubscription={() => setActiveTab('subscription')}
-              />
-            ) : null}
-            {activeTab === 'subscription' ? (
-              <SubscriptionTab farmer={farmer} onUpdated={handleSubscriptionUpdated} />
-            ) : null}
-            {activeTab === 'product_cards' ? <ProductCardsTab farmer={farmer} /> : null}
-            {activeTab === 'advisory' ? <AdvisoryTab farmer={farmer} /> : null}
-            {activeTab === 'activity' ? <PlaceholderPanel title="Activity history" /> : null}
-          </div>
         </div>
-      </div>
-    </div>
+
+        <div className="p-6">
+          {activeTab === 'overview' ? (
+            <FarmOverviewPanel
+              farmer={farmer}
+              fields={fields}
+              selectedField={selectedField}
+              fieldsLoading={fieldsQuery.loading}
+              fieldsError={fieldsQuery.error}
+            />
+          ) : null}
+          {activeTab === 'fields' ? (
+            <FarmListPanel
+              fields={fields}
+              loading={fieldsQuery.loading}
+              error={fieldsQuery.error}
+              onViewReport={(fieldId) => {
+                setSelectedFieldId(fieldId)
+                setActiveTab('reports')
+              }}
+            />
+          ) : null}
+          {activeTab === 'reports' ? (
+            <FieldReportPanel
+              loading={fieldsQuery.loading}
+              error={fieldsQuery.error}
+              field={selectedField}
+              onManageSubscription={isClientViewer ? undefined : () => setActiveTab('subscription')}
+            />
+          ) : null}
+          {activeTab === 'advisory' ? <AdvisoryTab farmer={farmer} /> : null}
+          {activeTab === 'subscription' && !isClientViewer ? (
+            <SubscriptionTab farmer={farmer} onUpdated={handleSubscriptionUpdated} />
+          ) : null}
+          {activeTab === 'product_cards' && !isClientViewer ? (
+            <ProductCardsTab farmer={farmer} />
+          ) : null}
+          {activeTab === 'profile' ? (
+            <ProfilePanel
+              farmer={farmer}
+              canManageClients={canManageClients}
+              onClientChange={(client) => setFarmer((prev) => (prev ? { ...prev, client } : prev))}
+            />
+          ) : null}
+        </div>
+      </section>
+    </PageShell>
   )
 }

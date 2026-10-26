@@ -1,4 +1,5 @@
 import {
+  Building2,
   CreditCard,
   LayoutDashboard,
   Settings,
@@ -49,6 +50,29 @@ export const secondaryNav = [
   { label: 'Settings', path: '/settings', icon: Settings },
 ]
 
+export const clientsNav = { label: 'Clients', path: '/clients', icon: Building2 }
+
+/** Client viewers only monitor their farmers; everything else is hidden. */
+const CLIENT_VIEWER_NAV_PATHS = new Set(['/dashboard', '/farmers'])
+
+export function getMainNav({ isClientViewer = false } = {}) {
+  if (!isClientViewer) return mainNav
+  return mainNav.filter((item) => CLIENT_VIEWER_NAV_PATHS.has(item.path))
+}
+
+export function getSecondaryNav({ isClientViewer = false, canManageClients = false } = {}) {
+  if (isClientViewer) return []
+  return canManageClients ? [clientsNav, ...secondaryNav] : secondaryNav
+}
+
+/** Pages a client viewer may open: dashboard, farmer list/detail, own profile. */
+export function isClientViewerPathAllowed(pathname) {
+  if (pathname === '/dashboard' || pathname === '/farmers' || pathname === '/profile') {
+    return true
+  }
+  return /^\/farmers\/(?!add(?:\/|$))[^/]+\/?$/.test(pathname)
+}
+
 function flattenNavItem(item) {
   if (item.children?.length) {
     return [item, ...item.children]
@@ -56,10 +80,7 @@ function flattenNavItem(item) {
   return [item]
 }
 
-export const allNavItems = [
-  ...mainNav.flatMap(flattenNavItem),
-  ...secondaryNav,
-]
+export const allNavItems = [...mainNav.flatMap(flattenNavItem), clientsNav, ...secondaryNav]
 
 export function isNavChildActive(pathname, childPath) {
   if (childPath === '/subscriptions') {

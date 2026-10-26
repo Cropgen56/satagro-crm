@@ -93,16 +93,18 @@ export default function FieldReportPanel({ loading, error, field, onManageSubscr
             </span>
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={onManageSubscription}
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-950"
-          >
-            <CreditCard className="h-4 w-4" />
-            {active ? 'Manage subscription' : 'Activate subscription'}
-          </button>
-        </div>
+        {onManageSubscription ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={onManageSubscription}
+              className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-3 py-2 text-sm font-semibold text-white hover:bg-brand-950"
+            >
+              <CreditCard className="h-4 w-4" />
+              {active ? 'Manage subscription' : 'Activate subscription'}
+            </button>
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">

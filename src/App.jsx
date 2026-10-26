@@ -11,6 +11,7 @@ import FarmerDetailPage from '@/pages/FarmerDetailPage'
 import AddLeadPage from '@/pages/AddLeadPage'
 import ConvertLeadPage from '@/pages/ConvertLeadPage'
 import FarmersPage from '@/pages/FarmersPage'
+import ClientsPage from '@/pages/ClientsPage'
 import LeadDetailPage from '@/pages/LeadDetailPage'
 import ActivitiesPage from '@/pages/ActivitiesPage'
 import ActivityDetailPage from '@/pages/ActivityDetailPage'
@@ -85,6 +86,7 @@ export default function App() {
           <Route path="/farmers" element={<FarmersPage />} />
           <Route path="/farmers/add" element={<AddFarmerPage />} />
           <Route path="/farmers/:id" element={<FarmerDetailPage />} />
+          <Route path="/clients" element={<ClientsPage />} />
           <Route path="/products" element={<Navigate to="/ecommerce/products" replace />} />
           <Route path="/products/new" element={<Navigate to="/ecommerce/products/new" replace />} />
           <Route path="/products/:id/edit" element={<RedirectProductEdit />} />

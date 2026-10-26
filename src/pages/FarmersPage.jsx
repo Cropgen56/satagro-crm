@@ -6,6 +6,8 @@ import FarmerSummaryCard from '@/components/farmers/FarmerSummaryCard'
 import EmptyState from '@/components/ui/EmptyState'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { fetchFarmers, fetchFarmerStats } from '@/lib/farmers'
+import { fetchClients } from '@/lib/clients'
+import { useAuth } from '@/hooks/useAuth'
 import { Sprout, Users, MapPin, Activity } from 'lucide-react'
 
 export default function FarmersPage() {
@@ -17,6 +19,16 @@ export default function FarmersPage() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search)
+  const { isClientViewer, canManageClients, clientOrganization } = useAuth()
+  const [clients, setClients] = useState([])
+  const [clientId, setClientId] = useState('')
+
+  useEffect(() => {
+    if (!canManageClients) return
+    fetchClients()
+      .then((res) => setClients(res?.clients || []))
+      .catch(() => setClients([]))
+  }, [canManageClients])
 
   const loadStats = useCallback(async () => {
     try {
@@ -39,6 +51,7 @@ export default function FarmersPage() {
           page,
           limit: 20,
           ...(searchQuery?.trim() ? { search: searchQuery.trim() } : {}),
+          ...(clientId ? { clientId } : {}),
         })
         setFarmers(listRes?.farmers || [])
         setPagination(listRes?.pagination || {})
@@ -49,7 +62,7 @@ export default function FarmersPage() {
         setLoading(false)
       }
     },
-    [debouncedSearch]
+    [debouncedSearch, clientId],
   )
 
   useEffect(() => {
@@ -64,7 +77,9 @@ export default function FarmersPage() {
     {
       label: 'Total farmers',
       value: statsLoading ? '—' : (stats?.total ?? '—'),
-      note: 'BIODROPS org',
+      note: isClientViewer
+        ? clientOrganization?.organizationName || 'Your organization'
+        : 'BIODROPS org',
       noteVariant: 'neutral',
       icon: Users,
       iconBg: 'bg-[#E7EFEC]',
@@ -90,11 +105,7 @@ export default function FarmersPage() {
     },
     {
       label: 'Total acreage',
-      value: statsLoading
-        ? '—'
-        : stats?.totalAcres != null
-          ? `${stats.totalAcres} ac`
-          : '—',
+      value: statsLoading ? '—' : stats?.totalAcres != null ? `${stats.totalAcres} ac` : '—',
       note: 'Registered land',
       noteVariant: 'neutral',
       icon: Sprout,
@@ -126,7 +137,11 @@ export default function FarmersPage() {
           <EmptyState
             icon={Sprout}
             title="No farmers yet"
-            description="Farmers with role farmer in the BIODROPS organization will appear here."
+            description={
+              isClientViewer
+                ? 'Farmers who register with your organization code will appear here.'
+                : 'Farmers with role farmer in the BIODROPS organization will appear here.'
+            }
           />
         ) : (
           <FarmersTable
@@ -136,6 +151,10 @@ export default function FarmersPage() {
             search={search}
             onSearchChange={setSearch}
             onPageChange={(page) => loadFarmers(page, debouncedSearch)}
+            showClientColumn={canManageClients}
+            clients={clients}
+            clientId={clientId}
+            onClientChange={setClientId}
           />
         )}
       </div>

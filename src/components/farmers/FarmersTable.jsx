@@ -6,10 +6,11 @@ import { UserAvatar } from '@/components/ui/EmptyState'
 import FarmersFilterBar from './FarmersFilterBar'
 import StatusBadge from './StatusBadge'
 
-const columns = [
+const baseColumns = [
   'Farmer',
   'Mobile',
   'Location',
+  'Client',
   'Land',
   'Crop',
   'Account',
@@ -24,8 +25,13 @@ export default function FarmersTable({
   search = '',
   onSearchChange,
   onPageChange,
+  showClientColumn = false,
+  clients = [],
+  clientId = '',
+  onClientChange,
 }) {
   const navigate = useNavigate()
+  const columns = showClientColumn ? baseColumns : baseColumns.filter((col) => col !== 'Client')
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
   const totalPages = pagination?.totalPages || 1
   const limit = pagination?.limit || 20
@@ -46,7 +52,13 @@ export default function FarmersTable({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
-      <FarmersFilterBar search={search} onSearchChange={onSearchChange} />
+      <FarmersFilterBar
+        search={search}
+        onSearchChange={onSearchChange}
+        clients={showClientColumn ? clients : []}
+        clientId={clientId}
+        onClientChange={onClientChange}
+      />
 
       <div className="overflow-x-auto">
         <table className="min-w-full text-left">
@@ -62,13 +74,19 @@ export default function FarmersTable({
           <tbody className="divide-y divide-gray-100">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-5 py-16 text-center text-sm text-gray-500">
+                <td
+                  colSpan={columns.length}
+                  className="px-5 py-16 text-center text-sm text-gray-500"
+                >
                   Loading farmers...
                 </td>
               </tr>
             ) : farmers.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-500">
+                <td
+                  colSpan={columns.length}
+                  className="px-5 py-12 text-center text-sm text-gray-500"
+                >
                   No farmers match your search.
                 </td>
               </tr>
@@ -87,9 +105,7 @@ export default function FarmersTable({
                         className="h-10 w-10 shrink-0 text-sm"
                       />
                       <div className="min-w-0">
-                        <p className="truncate font-semibold text-gray-900">
-                          {farmer.name}
-                        </p>
+                        <p className="truncate font-semibold text-gray-900">{farmer.name}</p>
                         <p className="text-xs text-gray-400">{farmer.uid}</p>
                       </div>
                     </div>
@@ -100,6 +116,11 @@ export default function FarmersTable({
                       {farmer.location}
                     </p>
                   </td>
+                  {showClientColumn ? (
+                    <td className="px-5 py-4 text-sm text-gray-600">
+                      {farmer.client?.name || <span className="text-gray-400">—</span>}
+                    </td>
+                  ) : null}
                   <td className="px-5 py-4 text-sm text-gray-600">
                     {farmer.landSize}
                     {farmer.fieldCount > 0 ? (
@@ -112,9 +133,7 @@ export default function FarmersTable({
                   <td className="px-5 py-4">
                     <StatusBadge status={farmer.status} />
                   </td>
-                  <td className="px-5 py-4 text-sm text-gray-500">
-                    {farmer.lastAdvisory}
-                  </td>
+                  <td className="px-5 py-4 text-sm text-gray-500">{farmer.lastAdvisory}</td>
                   <td className="px-5 py-4">
                     <button
                       type="button"
@@ -158,7 +177,7 @@ export default function FarmersTable({
               disabled={currentPage >= totalPages}
               className={clsx(
                 'flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200',
-                currentPage >= totalPages && 'opacity-40'
+                currentPage >= totalPages && 'opacity-40',
               )}
             >
               <ChevronRight className="h-4 w-4" />

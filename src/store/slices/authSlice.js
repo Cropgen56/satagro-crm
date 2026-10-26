@@ -9,6 +9,8 @@ import {
 } from '@/lib/api'
 import {
   canAccessCrm,
+  canManageClients,
+  isClientViewer,
   clearAuthStorage,
   formatUserDisplayName,
   formatUserRoleLabel,
@@ -36,33 +38,30 @@ async function fetchSession() {
   return { user, assignments, serverHierarchy }
 }
 
-export const bootstrapSession = createAsyncThunk(
-  'auth/bootstrap',
-  async () => {
-    if (!hasStoredSession()) {
-      return { user: null, assignments: [], serverHierarchy: null }
+export const bootstrapSession = createAsyncThunk('auth/bootstrap', async () => {
+  if (!hasStoredSession()) {
+    return { user: null, assignments: [], serverHierarchy: null }
+  }
+
+  try {
+    return await fetchSession()
+  } catch (firstError) {
+    if (getRefreshToken()) {
+      try {
+        await refreshAccessToken()
+        return await fetchSession()
+      } catch {
+        // Fall through to clear session below.
+      }
     }
 
-    try {
-      return await fetchSession()
-    } catch (firstError) {
-      if (getRefreshToken()) {
-        try {
-          await refreshAccessToken()
-          return await fetchSession()
-        } catch {
-          // Fall through to clear session below.
-        }
-      }
-
-      if (isAuthErrorMessage(firstError?.message) || !getRefreshToken()) {
-        clearAuthStorage()
-      }
-
-      return { user: null, assignments: [], serverHierarchy: null }
+    if (isAuthErrorMessage(firstError?.message) || !getRefreshToken()) {
+      clearAuthStorage()
     }
-  },
-)
+
+    return { user: null, assignments: [], serverHierarchy: null }
+  }
+})
 
 export const completeLogin = createAsyncThunk(
   'auth/completeLogin',
@@ -81,8 +80,7 @@ export const completeLogin = createAsyncThunk(
 
     if (verifyResponse?.onboardingRequired) {
       return rejectWithValue({
-        message:
-          'Your account setup is incomplete. Contact your administrator.',
+        message: 'Your account setup is incomplete. Contact your administrator.',
       })
     }
 
@@ -156,25 +154,13 @@ export default authSlice.reducer
 
 const selectAuthState = (state) => state.auth
 
-export const selectUser = createSelector(
-  selectAuthState,
-  (auth) => auth.user,
-)
+export const selectUser = createSelector(selectAuthState, (auth) => auth.user)
 
-export const selectAssignments = createSelector(
-  selectAuthState,
-  (auth) => auth.assignments,
-)
+export const selectAssignments = createSelector(selectAuthState, (auth) => auth.assignments)
 
-export const selectServerHierarchy = createSelector(
-  selectAuthState,
-  (auth) => auth.serverHierarchy,
-)
+export const selectServerHierarchy = createSelector(selectAuthState, (auth) => auth.serverHierarchy)
 
-export const selectLoading = createSelector(
-  selectAuthState,
-  (auth) => auth.loading,
-)
+export const selectLoading = createSelector(selectAuthState, (auth) => auth.loading)
 
 export const selectHierarchy = createSelector(
   [selectUser, selectAssignments, selectServerHierarchy],
@@ -195,9 +181,7 @@ export const selectHierarchy = createSelector(
   },
 )
 
-export const selectCurrentUserId = createSelector(selectUser, (user) =>
-  getUserId(user),
-)
+export const selectCurrentUserId = createSelector(selectUser, (user) => getUserId(user))
 
 export const selectIsAuthenticated = createSelector(selectUser, (user) =>
   Boolean(user && hasStoredSession()),
@@ -213,9 +197,23 @@ export const selectCanInviteUsers = createSelector(
   (hierarchy) => hierarchy.canInvite,
 )
 
-export const selectDisplayName = createSelector(selectUser, (user) =>
-  formatUserDisplayName(user),
+export const selectIsClientViewer = createSelector(
+  [selectUser, selectAssignments],
+  (user, assignments) => isClientViewer(user, assignments),
 )
+
+export const selectCanManageClients = createSelector(
+  [selectUser, selectAssignments],
+  (user, assignments) => canManageClients(user, assignments),
+)
+
+/** { _id, organizationName, organizationCode, status } for client viewers. */
+export const selectClientOrganization = createSelector(
+  [selectUser, selectIsClientViewer],
+  (user, clientViewer) => (clientViewer ? user?.clientOrganization || null : null),
+)
+
+export const selectDisplayName = createSelector(selectUser, (user) => formatUserDisplayName(user))
 
 export const selectRoleLabel = createSelector(
   [selectUser, selectAssignments],

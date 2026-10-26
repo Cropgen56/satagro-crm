@@ -3,10 +3,10 @@ import { ChevronDown, LogOut } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
+  getMainNav,
+  getSecondaryNav,
   isNavChildActive,
   isNavGroupActive,
-  mainNav,
-  secondaryNav,
 } from '@/config/navigation'
 import Logo from '@/components/ui/Logo'
 import { useAuth } from '@/hooks/useAuth'
@@ -121,11 +121,7 @@ function SidebarNavGroup({ item }) {
             {item.children.map((child) => {
               const active = isNavChildActive(pathname, child.path)
               return (
-                <NavLink
-                  key={child.path}
-                  to={child.path}
-                  className={childLinkClass(active)}
-                >
+                <NavLink key={child.path} to={child.path} className={childLinkClass(active)}>
                   <span
                     className={clsx(
                       'absolute -left-px top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-200',
@@ -171,7 +167,17 @@ function SidebarSectionLabel({ children }) {
 
 export default function Sidebar() {
   const navigate = useNavigate()
-  const { user, displayName, roleLabel, logout } = useAuth()
+  const {
+    user,
+    displayName,
+    roleLabel,
+    logout,
+    isClientViewer,
+    canManageClients,
+    clientOrganization,
+  } = useAuth()
+  const mainNav = getMainNav({ isClientViewer })
+  const secondaryNav = getSecondaryNav({ isClientViewer, canManageClients })
 
   const handleLogout = async () => {
     await logout()
@@ -191,7 +197,7 @@ export default function Sidebar() {
           <SidebarNavItem key={item.label} item={item} />
         ))}
 
-        <SidebarSectionLabel>Administration</SidebarSectionLabel>
+        {secondaryNav.length > 0 && <SidebarSectionLabel>Administration</SidebarSectionLabel>}
 
         {secondaryNav.map(({ label, path, icon: Icon }) => (
           <NavLink key={path} to={path} className={({ isActive }) => navItemClass(isActive)}>
@@ -217,11 +223,11 @@ export default function Sidebar() {
           </div>
 
           <div className="min-w-0 flex-1 text-left">
-            <p className="truncate text-sm font-semibold text-gray-900">
-              {displayName}
-            </p>
+            <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
             <p className="truncate text-[10px] font-medium uppercase tracking-wider text-gray-400">
-              {roleLabel}
+              {clientOrganization?.organizationName
+                ? `${roleLabel} · ${clientOrganization.organizationName}`
+                : roleLabel}
             </p>
           </div>
         </button>

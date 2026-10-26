@@ -1,9 +1,5 @@
-import { API_BASE_URL, apiRequest } from '@/lib/api'
+import { apiRequest } from '@/lib/api'
 
-const SERVER_ORIGIN = API_BASE_URL.replace(/\/v1\/api\/auth\/?$/, '')
-
-const FIELD_API_URL = `${SERVER_ORIGIN}/v1/api/field`
-const ADVISORY_API_URL = `${SERVER_ORIGIN}/v2/api/advisory`
 const SATELLITE_API_URL = (
   import.meta.env.VITE_SATELLITE_API_URL || 'https://server.cropgenapp.com/v4/api'
 ).replace(/\/$/, '')
@@ -72,12 +68,13 @@ async function cached(key, loader) {
 }
 
 export async function fetchFarmerFields(userId) {
-  const data = await apiRequest(`${FIELD_API_URL}/get-field/${userId}`)
+  // CRM-scoped: the server checks the farmer is in this viewer's region/client.
+  const data = await apiRequest(`/crm/farmers/${userId}/fields`)
   return Array.isArray(data?.farmFields) ? data.farmFields : []
 }
 
 export async function fetchLatestFieldAdvisory(fieldId) {
-  const data = await apiRequest(`${ADVISORY_API_URL}/${fieldId}?page=1&limit=1`)
+  const data = await apiRequest(`/crm/fields/${fieldId}/advisories?page=1&limit=1`)
   return data?.advisories?.[0] || null
 }
 

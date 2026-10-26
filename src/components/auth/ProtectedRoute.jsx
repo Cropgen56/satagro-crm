@@ -1,8 +1,9 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
+import { isClientViewerPathAllowed } from '@/config/navigation'
 
 export default function ProtectedRoute() {
-  const { loading, isAuthenticated, canAccessCrm } = useAuth()
+  const { loading, isAuthenticated, canAccessCrm, isClientViewer } = useAuth()
   const location = useLocation()
 
   if (loading) {
@@ -19,6 +20,11 @@ export default function ProtectedRoute() {
 
   if (!canAccessCrm) {
     return <Navigate to="/access-denied" replace />
+  }
+
+  // Client logins are read-only monitors of their own farmers.
+  if (isClientViewer && !isClientViewerPathAllowed(location.pathname)) {
+    return <Navigate to="/dashboard" replace />
   }
 
   return <Outlet />

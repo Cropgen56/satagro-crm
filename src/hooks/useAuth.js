@@ -7,6 +7,9 @@ import {
   selectAssignments,
   selectCanAccessCrm,
   selectCanInviteUsers,
+  selectCanManageClients,
+  selectClientOrganization,
+  selectIsClientViewer,
   selectCurrentUserId,
   selectDisplayName,
   selectHierarchy,
@@ -28,21 +31,18 @@ export function useAuth() {
   const canInviteUsers = useAppSelector(selectCanInviteUsers)
   const displayName = useAppSelector(selectDisplayName)
   const roleLabel = useAppSelector(selectRoleLabel)
+  const isClientViewer = useAppSelector(selectIsClientViewer)
+  const canManageClients = useAppSelector(selectCanManageClients)
+  const clientOrganization = useAppSelector(selectClientOrganization)
 
   const completeLogin = useCallback(
     (verifyResponse) => dispatch(completeLoginThunk(verifyResponse)).unwrap(),
     [dispatch],
   )
 
-  const logout = useCallback(
-    () => dispatch(logoutThunk()).unwrap(),
-    [dispatch],
-  )
+  const logout = useCallback(() => dispatch(logoutThunk()).unwrap(), [dispatch])
 
-  const refreshSession = useCallback(
-    () => dispatch(bootstrapSession()).unwrap(),
-    [dispatch],
-  )
+  const refreshSession = useCallback(() => dispatch(bootstrapSession()).unwrap(), [dispatch])
 
   return {
     user,
@@ -55,6 +55,9 @@ export function useAuth() {
     canInviteUsers,
     displayName,
     roleLabel,
+    isClientViewer,
+    canManageClients,
+    clientOrganization,
     completeLogin,
     logout,
     refreshSession,

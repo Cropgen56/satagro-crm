@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import clsx from 'clsx'
-import { Activity, AlertTriangle, Clock, LandPlot } from 'lucide-react'
+import { Activity, AlertTriangle, Clock, CreditCard } from 'lucide-react'
 import useAsyncData from '@/hooks/useAsyncData'
 import { fetchFarmerAdvisories } from '@/lib/advisories'
 import FieldSatelliteMap from '@/components/farmer-detail/analytics/FieldSatelliteMap'
@@ -15,7 +15,7 @@ function isRiskActivity(type) {
 
 function MetricCard({ icon: Icon, label, value, note, iconBg, iconColor, noteClass }) {
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+    <div className="rounded-xl border border-gray-100 bg-white p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{label}</p>
@@ -94,23 +94,80 @@ export default function FarmOverviewPanel({
   )
 
   const loadingAdvisories = advisoriesQuery.loading
+  const subscribedCount = fields.filter((f) => f.subscription?.hasActiveSubscription).length
   const avgTone = healthTone(avgHealth)
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+      {advisoriesQuery.error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {advisoriesQuery.error}
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <MetricCard
+          icon={Activity}
+          label="Avg crop health"
+          value={loadingAdvisories ? '…' : avgHealth != null ? `${avgHealth}%` : '—'}
+          note={
+            loadingAdvisories
+              ? 'Loading advisories'
+              : avgHealth != null
+                ? `${avgTone.label} · ${scoredCount} field${scoredCount === 1 ? '' : 's'} scored`
+                : 'No health score yet'
+          }
+          noteClass={avgHealth != null ? avgTone.text : undefined}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-700"
+        />
+        <MetricCard
+          icon={AlertTriangle}
+          label="Active alerts"
+          value={loadingAdvisories ? '…' : alerts.length}
+          note={`Crop risks in the last ${ALERT_WINDOW_DAYS} days`}
+          iconBg="bg-orange-50"
+          iconColor="text-orange-600"
+        />
+        <MetricCard
+          icon={Clock}
+          label="Last advisory"
+          value={loadingAdvisories ? '…' : timeAgo(lastCoverage) || '—'}
+          note={lastCoverage ? 'Latest advisory generated' : 'No advisory generated yet'}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+        />
+        <MetricCard
+          icon={CreditCard}
+          label="Subscribed farms"
+          value={fieldsLoading ? '…' : `${subscribedCount} / ${fields.length}`}
+          note={
+            fieldsLoading
+              ? 'Loading farms'
+              : fields.length && subscribedCount === fields.length
+                ? 'All farms covered'
+                : `${fields.length - subscribedCount} without an active plan`
+          }
+          noteClass={
+            !fieldsLoading && fields.length && subscribedCount < fields.length
+              ? 'text-amber-700'
+              : undefined
+          }
+          iconBg="bg-[#E7EFEC]"
+          iconColor="text-brand-primary"
+        />
+      </div>
+
+      <div className="rounded-xl border border-gray-100 bg-white">
         <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-gray-900">Farm Map & Index</h3>
+            <h3 className="text-sm font-semibold text-gray-900">Satellite view</h3>
             <p className="mt-0.5 text-xs text-gray-500">
               {mapField
                 ? `Satellite index overlay for ${mapField.fieldName} · ${formatFieldCrops(mapField)}`
                 : 'Satellite index overlay for the selected farm'}
             </p>
           </div>
-          {fields.length > 1 ? (
-            <p className="text-xs text-gray-500">Switch farms with the farm selector above.</p>
-          ) : null}
         </div>
         <div className="p-5">
           {fieldsLoading ? (
@@ -127,57 +184,9 @@ export default function FarmOverviewPanel({
         </div>
       </div>
 
-      {advisoriesQuery.error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {advisoriesQuery.error}
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          icon={LandPlot}
-          label="Total Area"
-          value={farmer.totalAcre > 0 ? `${farmer.totalAcre.toFixed(2)} ac` : '—'}
-          note={`${farmer.fieldCount} field${farmer.fieldCount === 1 ? '' : 's'}`}
-          iconBg="bg-[#E7EFEC]"
-          iconColor="text-brand-primary"
-        />
-        <MetricCard
-          icon={Activity}
-          label="Avg Health Score"
-          value={loadingAdvisories ? '…' : avgHealth != null ? `${avgHealth}%` : '—'}
-          note={
-            loadingAdvisories
-              ? 'Loading advisories'
-              : avgHealth != null
-                ? `${avgTone.label} · ${scoredCount} field${scoredCount === 1 ? '' : 's'} scored`
-                : 'No health score yet'
-          }
-          noteClass={avgHealth != null ? avgTone.text : undefined}
-          iconBg="bg-emerald-50"
-          iconColor="text-emerald-700"
-        />
-        <MetricCard
-          icon={AlertTriangle}
-          label="Active Alerts"
-          value={loadingAdvisories ? '…' : alerts.length}
-          note={`Crop risks in the last ${ALERT_WINDOW_DAYS} days`}
-          iconBg="bg-orange-50"
-          iconColor="text-orange-600"
-        />
-        <MetricCard
-          icon={Clock}
-          label="Last Coverage"
-          value={loadingAdvisories ? '…' : timeAgo(lastCoverage) || '—'}
-          note={lastCoverage ? 'Latest advisory generated' : 'No advisory generated yet'}
-          iconBg="bg-blue-50"
-          iconColor="text-blue-600"
-        />
-      </div>
-
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900">Recent Alerts</h3>
+        <div className="rounded-xl border border-gray-100 bg-white p-6">
+          <h3 className="text-sm font-semibold text-gray-900">Recent alerts</h3>
           <div className="mt-4 space-y-3">
             {loadingAdvisories ? (
               <p className="text-sm text-gray-500">Loading alerts…</p>
@@ -213,8 +222,8 @@ export default function FarmOverviewPanel({
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900">Farm Health Summary</h3>
+        <div className="rounded-xl border border-gray-100 bg-white p-6">
+          <h3 className="text-sm font-semibold text-gray-900">Crop health by farm</h3>
           <ul className="mt-4 space-y-3">
             {loadingAdvisories ? (
               <li className="text-sm text-gray-500">Loading health scores…</li>

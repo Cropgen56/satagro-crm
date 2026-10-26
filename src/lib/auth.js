@@ -100,8 +100,7 @@ export function getUserId(user) {
 
 export function isSameUser(user, otherUserOrId) {
   const left = getUserId(user)
-  const right =
-    typeof otherUserOrId === 'string' ? otherUserOrId : getUserId(otherUserOrId)
+  const right = typeof otherUserOrId === 'string' ? otherUserOrId : getUserId(otherUserOrId)
   if (!left || !right) return false
   return left === right
 }
@@ -113,9 +112,31 @@ export function normalizeProfileUser(user) {
   return { ...user, id, _id: id }
 }
 
+/**
+ * Read-only client login: staff with a BioDrops client org and no admin
+ * assignment. Mirrors isClientViewer on the server.
+ */
+export function isClientViewer(user, assignments = []) {
+  return (
+    user?.role === 'staff' &&
+    Boolean(user.clientOrganization) &&
+    !(Array.isArray(assignments) && assignments.length > 0)
+  )
+}
+
+/** Platform admins and super admins manage BioDrops clients. */
+export function canManageClients(user, assignments = []) {
+  if (!user) return false
+  if (PLATFORM_CRM_ROLES.has(user.role)) return true
+  return (assignments || []).some((a) => a.level === 'super')
+}
+
 export function canAccessCrm(user, assignments = []) {
   if (!user) return false
   if (PLATFORM_CRM_ROLES.has(user.role)) return true
+  if (isClientViewer(user, assignments)) {
+    return user.clientOrganization?.status !== 'inactive'
+  }
   if (user.role === 'staff' && Array.isArray(assignments) && assignments.length > 0) {
     return true
   }
@@ -133,6 +154,7 @@ export function formatUserRoleLabel(user, assignments = []) {
   if (PLATFORM_CRM_ROLES.has(user.role)) {
     return user.role === 'developer' ? 'Platform Developer' : 'Platform Admin'
   }
+  if (isClientViewer(user, assignments)) return 'Client'
   const level = assignments?.[0]?.level
   const labels = {
     super: 'Super Admin',

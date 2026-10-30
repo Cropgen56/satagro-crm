@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import clsx from 'clsx'
-import { Building2, Check, Copy, Plus, X } from 'lucide-react'
+import { Building2, Check, Copy, Pencil, Plus, X } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import { createClient, fetchClients, updateClient } from '@/lib/clients'
 import { useAuth } from '@/hooks/useAuth'
@@ -186,6 +186,126 @@ function CreateClientForm({ onCreated, onCancel }) {
   )
 }
 
+/** The code is read-only: farmers have already registered with it. */
+function EditClientForm({ client, onSaved, onCancel }) {
+  const [form, setForm] = useState({
+    organizationName: client.organizationName || '',
+    contactName: client.logins?.[0]?.name || '',
+    email: client.logins?.[0]?.email || client.email || '',
+    phoneNumber: client.phoneNumber || '',
+    city: client.address?.city || '',
+    state: client.address?.state || '',
+  })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const set = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      setSaving(true)
+      setError('')
+      const res = await updateClient(client.id, {
+        organizationName: form.organizationName,
+        contactName: form.contactName,
+        email: form.email,
+        phoneNumber: form.phoneNumber,
+        // The server replaces the whole address, so keep country/pincode.
+        address: { ...client.address, city: form.city, state: form.state },
+      })
+      onSaved?.(res.client)
+    } catch (err) {
+      setError(err.message || 'Failed to update client')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm"
+    >
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-semibold text-gray-900">Edit client</h2>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+          aria-label="Close"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="mt-5 grid gap-4 md:grid-cols-2">
+        <Field label="Organization name *">
+          <input
+            required
+            className={INPUT}
+            value={form.organizationName}
+            onChange={set('organizationName')}
+          />
+        </Field>
+        <Field label="Contact person">
+          <input className={INPUT} value={form.contactName} onChange={set('contactName')} />
+        </Field>
+        <Field label="Login email *" hint="The client signs in with an OTP sent to this email.">
+          <input
+            required
+            type="email"
+            className={INPUT}
+            value={form.email}
+            onChange={set('email')}
+          />
+        </Field>
+        <Field label="Phone">
+          <input className={INPUT} value={form.phoneNumber} onChange={set('phoneNumber')} />
+        </Field>
+        <Field label="Organization code" hint="Cannot be changed — farmers registered with it.">
+          <input
+            disabled
+            className={clsx(INPUT, 'cursor-not-allowed font-mono uppercase text-gray-500')}
+            value={client.organizationCode || ''}
+          />
+        </Field>
+        <div className="grid grid-cols-2 gap-4">
+          <Field label="City">
+            <input className={INPUT} value={form.city} onChange={set('city')} />
+          </Field>
+          <Field label="State">
+            <input className={INPUT} value={form.state} onChange={set('state')} />
+          </Field>
+        </div>
+      </div>
+
+      {error ? (
+        <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+
+      <div className="mt-5 flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-10 rounded-lg border border-gray-200 px-4 text-sm font-medium text-gray-600 hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={saving}
+          className="h-10 rounded-lg bg-brand-primary px-4 text-sm font-semibold text-white hover:bg-brand-950 disabled:opacity-60"
+        >
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
 export default function ClientsPage() {
   const { canManageClients } = useAuth()
   if (!canManageClients) return <Navigate to="/dashboard" replace />
@@ -199,6 +319,7 @@ function ClientsManager() {
   const [notice, setNotice] = useState('')
   const [showForm, setShowForm] = useState(false)
   const [busyId, setBusyId] = useState(null)
+  const [editing, setEditing] = useState(null)
 
   const load = useCallback(async () => {
     try {
@@ -227,6 +348,20 @@ function ClientsManager() {
           (res.welcomeEmailSent ? ' Sign-in instructions were emailed.' : ''),
       )
     }
+  }
+
+  const handleSaved = (updated) => {
+    setEditing(null)
+    if (updated) {
+      setClients((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))
+      setNotice(`${updated.organizationName} updated.`)
+    }
+  }
+
+  const startEdit = (client) => {
+    setNotice('')
+    setShowForm(false)
+    setEditing(client)
   }
 
   const toggleStatus = async (client) => {
@@ -268,6 +403,7 @@ function ClientsManager() {
               type="button"
               onClick={() => {
                 setNotice('')
+                setEditing(null)
                 setShowForm(true)
               }}
               className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-950"
@@ -291,6 +427,15 @@ function ClientsManager() {
 
         {showForm ? (
           <CreateClientForm onCreated={handleCreated} onCancel={() => setShowForm(false)} />
+        ) : null}
+
+        {editing ? (
+          <EditClientForm
+            key={editing.id}
+            client={editing}
+            onSaved={handleSaved}
+            onCancel={() => setEditing(null)}
+          />
         ) : null}
 
         {!loading && clients.length === 0 && !error ? (
@@ -366,7 +511,15 @@ function ClientsManager() {
                             {client.status === 'active' ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-5 py-4 text-right">
+                        <td className="whitespace-nowrap px-5 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => startEdit(client)}
+                            className="mr-1 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </button>
                           <button
                             type="button"
                             disabled={busyId === client.id}

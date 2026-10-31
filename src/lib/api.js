@@ -19,6 +19,11 @@ const PUBLIC_PATHS = [
 
 let refreshPromise = null
 
+// Requests never send cookies (credentials: 'omit'): auth is the Bearer
+// token and the refresh token in the body, both from per-account storage in
+// lib/auth. A shared cookie would let the last CRM login in this browser take
+// over every tab's refresh — see lib/auth for the multi-account model.
+
 export const TOKEN_AUTH_PATTERNS = [
   'invalid or expired token',
   'no token provided',
@@ -66,7 +71,7 @@ export async function refreshAccessToken() {
   const response = await fetch(`${API_BASE_URL}/refresh`, {
     method: 'POST',
     headers: buildHeaders({}, null),
-    credentials: 'include',
+    credentials: 'omit',
     body: JSON.stringify({ refreshToken }),
   })
 
@@ -104,7 +109,7 @@ export async function apiRequest(path, options = {}, retry = true) {
   const response = await fetch(url, {
     method: options.method || 'GET',
     headers: buildHeaders(options.headers),
-    credentials: 'include',
+    credentials: 'omit',
     body: options.body ? JSON.stringify(options.body) : undefined,
   })
 
@@ -143,7 +148,7 @@ export async function logoutRequest() {
     await fetch(`${API_BASE_URL}/logout`, {
       method: 'POST',
       headers: buildHeaders(),
-      credentials: 'include',
+      credentials: 'omit',
       body: refreshToken ? JSON.stringify({ refreshToken }) : undefined,
     })
   } catch {

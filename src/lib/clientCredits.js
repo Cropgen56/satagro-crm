@@ -28,6 +28,14 @@ export function fetchClientCreditsDetail(clientId, params = {}) {
 
 /* --------------------------- client viewer -------------------------- */
 
+/** Super admin: give a client a plan directly — credits are active at once, no payment. */
+export function assignClientCreditPlan(clientId, planId) {
+  return apiRequest(`/crm/client-credits/clients/${clientId}/assign`, {
+    method: 'POST',
+    body: { planId },
+  })
+}
+
 export function fetchMyClientCredits() {
   return apiRequest('/crm/client-credits/me')
 }

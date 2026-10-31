@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import clsx from 'clsx'
 import {
   Building2,
@@ -8,9 +8,11 @@ import {
   Clock,
   Mail,
   MapPin,
+  Pencil,
   Phone,
   Sprout,
   Tractor,
+  Trash2,
   Wheat,
 } from 'lucide-react'
 import FarmerDetailTabs from '@/components/farmer-detail/FarmerDetailTabs'
@@ -22,10 +24,12 @@ import FarmListPanel from '@/components/farmer-detail/analytics/FarmListPanel'
 import FieldReportPanel from '@/components/farmer-detail/analytics/FieldReportPanel'
 import FarmSelector from '@/components/farmer-detail/analytics/FarmSelector'
 import FarmerClientCard from '@/components/farmer-detail/FarmerClientCard'
+import EditFarmerProfileModal from '@/components/farmer-detail/EditFarmerProfileModal'
+import ConfirmModal from '@/components/ui/ConfirmModal'
 import useAsyncData from '@/hooks/useAsyncData'
 import { useAuth } from '@/hooks/useAuth'
 import { fetchFarmerFields } from '@/lib/farmAnalytics'
-import { fetchFarmerById } from '@/lib/farmers'
+import { deleteFarmer, fetchFarmerById } from '@/lib/farmers'
 import { CLIENT_VIEWER_FARMER_TAB_IDS, FARMER_TABS } from '@/lib/moduleConstants'
 import StatusBadge from '@/components/farmers/StatusBadge'
 import { UserAvatar } from '@/components/ui/EmptyState'
@@ -97,7 +101,7 @@ function OrganizationBadge({ client }) {
   )
 }
 
-function ProfileHeader({ farmer }) {
+function ProfileHeader({ farmer, onEdit, onDelete }) {
   const location = formatLocationParts(farmer) || farmer.location
   const crops = farmer.crops || []
 
@@ -114,6 +118,28 @@ function ProfileHeader({ farmer }) {
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">{farmer.name}</h1>
             <StatusBadge status={farmer.status} />
             <OrganizationBadge client={farmer.client} />
+            <div className="ml-auto flex gap-2">
+              {onEdit ? (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:border-brand-primary hover:text-brand-primary"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit profile
+                </button>
+              ) : null}
+              {onDelete ? (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 shadow-sm hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete
+                </button>
+              ) : null}
+            </div>
           </div>
           <p className="mt-1 font-mono text-xs text-gray-400">{farmer.uid}</p>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-600">
@@ -213,6 +239,7 @@ function ProfilePanel({ farmer, canManageClients, onClientChange }) {
           <InfoRow label="District" value={farmer.district} />
           <InfoRow label="City" value={farmer.city} />
           <InfoRow label="Village" value={farmer.village} />
+          <InfoRow label="Pincode" value={farmer.pincode} />
           {!canManageClients ? (
             <InfoRow
               label="Organization"
@@ -247,6 +274,10 @@ export default function FarmerDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [selectedFieldId, setSelectedFieldId] = useState(location.state?.fieldId || '')
   const [fieldsVersion, setFieldsVersion] = useState(0)
+  const [editingProfile, setEditingProfile] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const navigate = useNavigate()
 
   const farmerId = farmer?.id
   const fieldsQuery = useAsyncData(farmerId ? `fields:${farmerId}:${fieldsVersion}` : null, () =>
@@ -326,7 +357,46 @@ export default function FarmerDetailPage() {
         <span className="truncate font-medium text-gray-900">{farmer.name}</span>
       </nav>
 
-      <ProfileHeader farmer={farmer} />
+      <ProfileHeader
+        farmer={farmer}
+        onEdit={() => setEditingProfile(true)}
+        onDelete={isClientViewer ? undefined : () => setConfirmDelete(true)}
+      />
+      <ConfirmModal
+        open={confirmDelete}
+        title="Delete farmer?"
+        message={`${farmer.name} will be removed from the CRM and logged out of the app. They won't be able to log in again with this account.`}
+        confirmLabel="Delete farmer"
+        danger
+        busy={deleting}
+        onConfirm={async () => {
+          setDeleting(true)
+          try {
+            await deleteFarmer(farmer.id)
+            navigate('/farmers', { replace: true })
+          } catch (err) {
+            setError(err.message || 'Failed to delete farmer')
+            setConfirmDelete(false)
+            setDeleting(false)
+          }
+        }}
+        onCancel={() => setConfirmDelete(false)}
+      />
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          {error}
+        </div>
+      ) : null}
+      {editingProfile ? (
+        <EditFarmerProfileModal
+          farmer={farmer}
+          onSaved={(updated) => {
+            if (updated) setFarmer(updated)
+            setEditingProfile(false)
+          }}
+          onClose={() => setEditingProfile(false)}
+        />
+      ) : null}
 
       <section className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-gray-200 px-6 pt-3 lg:flex-row lg:items-center lg:justify-between">

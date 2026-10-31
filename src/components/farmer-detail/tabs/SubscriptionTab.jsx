@@ -330,140 +330,162 @@ export default function SubscriptionTab({ farmer, onUpdated }) {
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-brand-primary/20 bg-[#F7FAF9] p-6 shadow-sm">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary/10">
-            <Building2 className="h-5 w-5 text-brand-primary" />
-          </span>
-          <div className="flex-1">
-            <h3 className="text-base font-semibold text-gray-900">
-              Enable enterprise subscription
-            </h3>
-            <p className="mt-1 text-sm text-gray-600">
-              Grant field access without Razorpay payment — same as CropGen admin
-              activation. Use internal plans for enterprise farmers.
-            </p>
+      {farmer.client ? (
+        // Client farmers' farms are activated only from their client's
+        // credits — the server refuses admin plans for them (CLIENT_MANAGED).
+        <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
+              <Building2 className="h-5 w-5 text-blue-700" />
+            </span>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-900">
+                Managed by {farmer.client.name || 'a client organization'}
+              </h3>
+              <p className="mt-1 text-sm text-gray-600">
+                This farmer belongs to a client. Their farms are activated from the client&apos;s
+                hectare credits (Client credits → Farm activations), not with a plan or Razorpay,
+                so plans can&apos;t be enabled here.
+              </p>
+            </div>
           </div>
         </div>
-
-        {!farmer.fields?.length ? (
-          <p className="mt-4 text-sm text-amber-700">
-            This farmer has no farms yet. Add a field in the app before enabling a
-            subscription.
-          </p>
-        ) : (
-          <>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {farmer.fields.map((field) => {
-                const isUnlocked = activeSubByFieldId.has(field.id)
-                return (
-                  <span
-                    key={field.id}
-                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700"
-                  >
-                    <span
-                      className={clsx(
-                        'h-2 w-2 shrink-0 rounded-full',
-                        isUnlocked ? 'bg-emerald-500' : 'bg-red-500',
-                      )}
-                      title={isUnlocked ? 'Active subscription' : 'Locked — no subscription'}
-                    />
-                    {field.fieldName}
-                  </span>
-                )
-              })}
+      ) : (
+        <div className="rounded-xl border border-brand-primary/20 bg-[#F7FAF9] p-6 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-primary/10">
+              <Building2 className="h-5 w-5 text-brand-primary" />
+            </span>
+            <div className="flex-1">
+              <h3 className="text-base font-semibold text-gray-900">
+                Enable enterprise subscription
+              </h3>
+              <p className="mt-1 text-sm text-gray-600">
+                Grant field access without Razorpay payment — same as CropGen admin
+                activation. Use internal plans for enterprise farmers.
+              </p>
             </div>
+          </div>
 
-            <form onSubmit={handleActivate} className="mt-5 grid gap-4 lg:grid-cols-4">
-            {selectedFieldHasActiveSub ? (
-              <p className="lg:col-span-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                This field already has an active subscription. Choose a locked
-                field (marked below) to unlock it in the app.
-              </p>
-            ) : null}
-            {tierCapWarning ? (
-              <p className="lg:col-span-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                {tierCapWarning} You can still activate it — this is just a
-                heads-up to consider a higher tier.
-              </p>
-            ) : null}
-            <label className="block text-sm">
-              <span className="font-medium text-gray-700">Farm / field</span>
-              <select
-                className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm"
-                value={form.farmId}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, farmId: e.target.value }))
-                }
-                required
-              >
+          {!farmer.fields?.length ? (
+            <p className="mt-4 text-sm text-amber-700">
+              This farmer has no farms yet. Add a field in the app before enabling a
+              subscription.
+            </p>
+          ) : (
+            <>
+              <div className="mt-4 flex flex-wrap gap-2">
                 {farmer.fields.map((field) => {
-                  const activeSub = activeSubByFieldId.get(field.id)
-                  const acreLabel =
-                    field.acre > 0 ? `${field.acre.toFixed(2)} ac` : '—'
-                  const statusLabel = activeSub
-                    ? `Unlocked until ${formatDate(activeSub.endDate)}`
-                    : 'Locked — no subscription'
+                  const isUnlocked = activeSubByFieldId.has(field.id)
                   return (
-                    <option key={field.id} value={field.id}>
-                      {field.fieldName} ({acreLabel}) — {statusLabel}
-                    </option>
+                    <span
+                      key={field.id}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700"
+                    >
+                      <span
+                        className={clsx(
+                          'h-2 w-2 shrink-0 rounded-full',
+                          isUnlocked ? 'bg-emerald-500' : 'bg-red-500',
+                        )}
+                        title={isUnlocked ? 'Active subscription' : 'Locked — no subscription'}
+                      />
+                      {field.fieldName}
+                    </span>
                   )
                 })}
-              </select>
-            </label>
+              </div>
 
-            <label className="block text-sm">
-              <span className="font-medium text-gray-700">Plan</span>
-              <select
-                className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm"
-                value={form.planId}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, planId: e.target.value }))
-                }
-                required
-              >
-                {plans.map((plan) => (
-                  <option key={plan._id} value={plan._id}>
-                    {plan.name}
-                    {isTierPlan(plan) ? ` — up to ${plan.maxAcres} acre` : ''}
-                    {plan.isInternal ? ' (Internal)' : ''}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <form onSubmit={handleActivate} className="mt-5 grid gap-4 lg:grid-cols-4">
+              {selectedFieldHasActiveSub ? (
+                <p className="lg:col-span-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  This field already has an active subscription. Choose a locked
+                  field (marked below) to unlock it in the app.
+                </p>
+              ) : null}
+              {tierCapWarning ? (
+                <p className="lg:col-span-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {tierCapWarning} You can still activate it — this is just a
+                  heads-up to consider a higher tier.
+                </p>
+              ) : null}
+              <label className="block text-sm">
+                <span className="font-medium text-gray-700">Farm / field</span>
+                <select
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm"
+                  value={form.farmId}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, farmId: e.target.value }))
+                  }
+                  required
+                >
+                  {farmer.fields.map((field) => {
+                    const activeSub = activeSubByFieldId.get(field.id)
+                    const acreLabel =
+                      field.acre > 0 ? `${field.acre.toFixed(2)} ac` : '—'
+                    const statusLabel = activeSub
+                      ? `Unlocked until ${formatDate(activeSub.endDate)}`
+                      : 'Locked — no subscription'
+                    return (
+                      <option key={field.id} value={field.id}>
+                        {field.fieldName} ({acreLabel}) — {statusLabel}
+                      </option>
+                    )
+                  })}
+                </select>
+              </label>
 
-            <label className="block text-sm">
-              <span className="font-medium text-gray-700">Billing cycle</span>
-              <select
-                className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm"
-                value={form.billingCycle}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, billingCycle: e.target.value }))
-                }
-                required
-              >
-                {BILLING_CYCLES.map((cycle) => (
-                  <option key={cycle.value} value={cycle.value}>
-                    {cycle.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="block text-sm">
+                <span className="font-medium text-gray-700">Plan</span>
+                <select
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm"
+                  value={form.planId}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, planId: e.target.value }))
+                  }
+                  required
+                >
+                  {plans.map((plan) => (
+                    <option key={plan._id} value={plan._id}>
+                      {plan.name}
+                      {isTierPlan(plan) ? ` — up to ${plan.maxAcres} acre` : ''}
+                      {plan.isInternal ? ' (Internal)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <div className="flex items-end">
-              <button
-                type="submit"
-                disabled={submitting || !plans.length || selectedFieldHasActiveSub}
-                className="w-full rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-950 disabled:opacity-60"
-              >
-                {submitting ? 'Enabling...' : 'Enable subscription'}
-              </button>
-            </div>
-          </form>
-          </>
-        )}
-      </div>
+              <label className="block text-sm">
+                <span className="font-medium text-gray-700">Billing cycle</span>
+                <select
+                  className="mt-1.5 w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm"
+                  value={form.billingCycle}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, billingCycle: e.target.value }))
+                  }
+                  required
+                >
+                  {BILLING_CYCLES.map((cycle) => (
+                    <option key={cycle.value} value={cycle.value}>
+                      {cycle.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="flex items-end">
+                <button
+                  type="submit"
+                  disabled={submitting || !plans.length || selectedFieldHasActiveSub}
+                  className="w-full rounded-lg bg-brand-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-950 disabled:opacity-60"
+                >
+                  {submitting ? 'Enabling...' : 'Enable subscription'}
+                </button>
+              </div>
+            </form>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 px-6 py-4">

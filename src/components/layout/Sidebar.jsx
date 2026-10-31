@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import { ChevronDown, LogOut } from 'lucide-react'
+import { ChevronDown, LogOut, UserPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -10,6 +10,9 @@ import {
 } from '@/config/navigation'
 import Logo from '@/components/ui/Logo'
 import { useAuth } from '@/hooks/useAuth'
+import { useAppDispatch } from '@/store/hooks'
+import { clearSession } from '@/store/slices/authSlice'
+import { startAnotherAccountInTab } from '@/lib/auth'
 
 const NAV_ITEM =
   'group relative flex w-full cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30'
@@ -179,8 +182,18 @@ export default function Sidebar() {
   const mainNav = getMainNav({ isClientViewer, canManageClients })
   const secondaryNav = getSecondaryNav({ isClientViewer, canManageClients })
 
+  const dispatch = useAppDispatch()
+
   const handleLogout = async () => {
     await logout()
+    navigate('/login', { replace: true })
+  }
+
+  // Sign in as someone else in this tab only; this account stays signed in
+  // in its other tabs (e.g. super admin in one tab, a client in another).
+  const handleUseAnotherAccount = () => {
+    startAnotherAccountInTab()
+    dispatch(clearSession())
     navigate('/login', { replace: true })
   }
 
@@ -241,6 +254,15 @@ export default function Sidebar() {
         >
           <LogOut className="h-4 w-4" strokeWidth={1.75} />
           Sign out
+        </button>
+        <button
+          type="button"
+          onClick={handleUseAnotherAccount}
+          title="Sign in to a different account in this tab. You stay signed in to this one in your other tabs."
+          className="flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium text-gray-500 transition hover:bg-gray-50 hover:text-gray-800"
+        >
+          <UserPlus className="h-4 w-4" strokeWidth={1.75} />
+          Use another account
         </button>
       </div>
     </aside>

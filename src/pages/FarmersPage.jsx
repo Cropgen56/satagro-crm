@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import FarmersPageHeader from '@/components/farmers/FarmersPageHeader'
 import FarmersTable from '@/components/farmers/FarmersTable'
 import FarmerSummaryCard from '@/components/farmers/FarmerSummaryCard'
 import EmptyState from '@/components/ui/EmptyState'
+import ConfirmModal from '@/components/ui/ConfirmModal'
+import EditFarmerProfileModal from '@/components/farmer-detail/EditFarmerProfileModal'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
-import { fetchFarmers, fetchFarmerStats } from '@/lib/farmers'
+import { deleteFarmer, fetchFarmers, fetchFarmerStats } from '@/lib/farmers'
 import { fetchClients } from '@/lib/clients'
 import { useAuth } from '@/hooks/useAuth'
 import { Sprout, Users, MapPin, Activity } from 'lucide-react'
@@ -21,6 +24,11 @@ export default function FarmersPage() {
   const { isClientViewer, canManageClients, clientOrganization } = useAuth()
   const [clients, setClients] = useState([])
   const [clientId, setClientId] = useState('')
+  const [pendingDelete, setPendingDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [adding, setAdding] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!canManageClients) return
@@ -72,6 +80,23 @@ export default function FarmersPage() {
     loadFarmers(1, debouncedSearch)
   }, [debouncedSearch, loadFarmers])
 
+  const handleDelete = async () => {
+    if (!pendingDelete) return
+    setDeleting(true)
+    try {
+      await deleteFarmer(pendingDelete.id)
+      setNotice(`${pendingDelete.name} was deleted.`)
+      setPendingDelete(null)
+      loadFarmers(pagination?.page || 1, debouncedSearch)
+      loadStats()
+    } catch (err) {
+      setError(err.message || 'Failed to delete farmer')
+      setPendingDelete(null)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const summaryCards = [
     {
       label: 'Total farmers',
@@ -116,7 +141,19 @@ export default function FarmersPage() {
   return (
     <div className="min-h-full bg-[#F5F7F6] p-6 lg:p-8">
       <div className="mx-auto max-w-[1400px] space-y-6">
-        <FarmersPageHeader />
+        <FarmersPageHeader onAddFarmer={() => setAdding(true)} />
+        {adding ? (
+          <EditFarmerProfileModal
+            farmer={null}
+            clients={canManageClients ? clients.filter((c) => c.status === 'active') : []}
+            onSaved={(created) => {
+              setAdding(false)
+              if (created?.id) navigate(`/farmers/${created.id}`)
+              else loadFarmers(1, debouncedSearch)
+            }}
+            onClose={() => setAdding(false)}
+          />
+        ) : null}
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {summaryCards.map((card) => (
@@ -127,6 +164,11 @@ export default function FarmersPage() {
         {error ? (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
+          </div>
+        ) : null}
+        {notice ? (
+          <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            {notice}
           </div>
         ) : null}
 
@@ -152,8 +194,24 @@ export default function FarmersPage() {
             clients={clients}
             clientId={clientId}
             onClientChange={setClientId}
+            onDelete={isClientViewer ? undefined : setPendingDelete}
           />
         )}
+
+        <ConfirmModal
+          open={Boolean(pendingDelete)}
+          title="Delete farmer?"
+          message={
+            pendingDelete
+              ? `${pendingDelete.name} (${pendingDelete.phone}) will be removed from the CRM and logged out of the app. They won't be able to log in again with this account.`
+              : ''
+          }
+          confirmLabel="Delete farmer"
+          danger
+          busy={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
       </div>
     </div>
   )

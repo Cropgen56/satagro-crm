@@ -166,7 +166,13 @@ export function PurchasesPanel({ purchases = [] }) {
               </p>
               <CreditMeter used={p.usedCredits} total={p.totalCredits} />
             </td>
-            <td className={TD}>{formatInrMinor(p.amountMinor)}</td>
+            <td className={TD}>
+              {p.paymentMethod === 'assigned' ? (
+                <span className="text-gray-500">Assigned</span>
+              ) : (
+                formatInrMinor(p.amountMinor)
+              )}
+            </td>
             <td className={clsx(TD, 'text-gray-600')}>{formatDate(p.paidAt)}</td>
             <td className={clsx(TD, 'text-gray-600')}>{formatDate(p.validUntil)}</td>
             <td className={TD}>

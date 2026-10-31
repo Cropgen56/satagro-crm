@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, Eye } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Eye, Trash2 } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import FarmersFilterBar from './FarmersFilterBar'
 import StatusBadge from './StatusBadge'
@@ -10,13 +10,33 @@ const baseColumns = [
   'Farmer',
   'Mobile',
   'Location',
-  'Client',
+  'Type',
   'Land',
   'Crop',
   'Account',
   'Last active',
   '',
 ]
+
+/** Client farmer (managed by a client org) vs. direct BioDrops farmer. */
+function FarmerTypeBadge({ client }) {
+  if (!client) {
+    return (
+      <span className="inline-flex items-center whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200">
+        BioDrops
+      </span>
+    )
+  }
+  return (
+    <span
+      className="inline-flex max-w-[180px] items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-200"
+      title={client.code ? `Client ${client.name} (${client.code})` : `Client ${client.name}`}
+    >
+      <span className="shrink-0">Client ·</span>
+      <span className="truncate">{client.name || client.code || 'Organization'}</span>
+    </span>
+  )
+}
 
 export default function FarmersTable({
   farmers = [],
@@ -29,9 +49,10 @@ export default function FarmersTable({
   clients = [],
   clientId = '',
   onClientChange,
+  onDelete,
 }) {
   const navigate = useNavigate()
-  const columns = showClientColumn ? baseColumns : baseColumns.filter((col) => col !== 'Client')
+  const columns = showClientColumn ? baseColumns : baseColumns.filter((col) => col !== 'Type')
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1)
   const totalPages = pagination?.totalPages || 1
   const limit = pagination?.limit || 20
@@ -117,8 +138,8 @@ export default function FarmersTable({
                     </p>
                   </td>
                   {showClientColumn ? (
-                    <td className="px-5 py-4 text-sm text-gray-600">
-                      {farmer.client?.name || <span className="text-gray-400">—</span>}
+                    <td className="px-5 py-4">
+                      <FarmerTypeBadge client={farmer.client} />
                     </td>
                   ) : null}
                   <td className="px-5 py-4 text-sm text-gray-600">
@@ -134,7 +155,7 @@ export default function FarmersTable({
                     <StatusBadge status={farmer.status} />
                   </td>
                   <td className="px-5 py-4 text-sm text-gray-500">{farmer.lastAdvisory}</td>
-                  <td className="px-5 py-4">
+                  <td className="whitespace-nowrap px-5 py-4">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -146,6 +167,20 @@ export default function FarmersTable({
                     >
                       <Eye className="h-4 w-4" />
                     </button>
+                    {onDelete ? (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDelete(farmer)
+                        }}
+                        className="rounded-lg p-2 text-gray-500 hover:bg-red-50 hover:text-red-600"
+                        aria-label={`Delete ${farmer.name}`}
+                        title="Delete farmer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    ) : null}
                   </td>
                 </tr>
               ))

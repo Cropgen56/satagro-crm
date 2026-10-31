@@ -3,33 +3,163 @@ const REFRESH_TOKEN_KEY = 'satagro_refresh_token'
 const LOGIN_PHONE_KEY = 'satagro_login_phone'
 const LOGIN_EMAIL_KEY = 'satagro_login_email'
 const LOGIN_METHOD_KEY = 'satagro_login_method'
+/** sessionStorage: the account this tab is signed in as. */
+const TAB_USER_KEY = 'satagro_tab_user'
+/** localStorage: the most recent login — what a brand-new tab opens as. */
+const LAST_USER_KEY = 'satagro_last_user'
+/** TAB_USER_KEY value for a tab that is signing in to a different account. */
+const NEW_ACCOUNT_TAB = '__new__'
 
 const PLATFORM_CRM_ROLES = new Set(['admin', 'developer'])
 
-export function setAccessToken(token) {
+/*
+ * Tokens are stored per account (`satagro_access_token:<userId>`), and each
+ * tab remembers which account it is signed in as. So a super admin and a
+ * client can be signed in to the CRM in different tabs of one browser without
+ * replacing each other, while every tab of the same account shares one token
+ * pair (the server rotates refresh tokens, so tabs of one account must share).
+ */
+
+const keyFor = (base, userId) => `${base}:${userId}`
+
+function storageGet(storage, key) {
+  try {
+    return storage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function storageSet(storage, key, value) {
+  try {
+    storage.setItem(key, value)
+  } catch {
+    // Storage blocked (private mode): the session lasts for this page only.
+  }
+}
+
+function storageRemove(storage, key) {
+  try {
+    storage.removeItem(key)
+  } catch {
+    // ignore
+  }
+}
+
+/** The user id inside a JWT (access and refresh tokens both carry `id`). */
+function userIdFromToken(token) {
+  try {
+    const part = String(token).split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const id = JSON.parse(atob(part))?.id
+    return id ? String(id) : null
+  } catch {
+    return null
+  }
+}
+
+/** Account ids with stored tokens in this browser. */
+function storedUserIds() {
+  const ids = new Set()
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i) || ''
+      const match = key.match(/^satagro_(?:access|refresh)_token:(.+)$/)
+      if (match) ids.add(match[1])
+    }
+  } catch {
+    // ignore
+  }
+  return [...ids]
+}
+
+/** Move tokens saved before per-account storage into the new layout. */
+function migrateLegacyTokens() {
+  const access = storageGet(localStorage, ACCESS_TOKEN_KEY)
+  const refresh = storageGet(localStorage, REFRESH_TOKEN_KEY)
+  if (!access && !refresh) return
+  const userId = userIdFromToken(access) || userIdFromToken(refresh)
+  if (userId) {
+    if (access) storageSet(localStorage, keyFor(ACCESS_TOKEN_KEY, userId), access)
+    if (refresh) storageSet(localStorage, keyFor(REFRESH_TOKEN_KEY, userId), refresh)
+    if (!storageGet(localStorage, LAST_USER_KEY)) storageSet(localStorage, LAST_USER_KEY, userId)
+  }
+  storageRemove(localStorage, ACCESS_TOKEN_KEY)
+  storageRemove(localStorage, REFRESH_TOKEN_KEY)
+}
+
+if (typeof window !== 'undefined') migrateLegacyTokens()
+
+/**
+ * The account this tab uses. A new tab adopts the most recent login once and
+ * then keeps it, so later logins in other tabs don't switch this one.
+ */
+function currentUserId() {
+  const tabUser = storageGet(sessionStorage, TAB_USER_KEY)
+  if (tabUser === NEW_ACCOUNT_TAB) return null
+  if (tabUser) return tabUser
+  const last = storageGet(localStorage, LAST_USER_KEY)
+  if (last) storageSet(sessionStorage, TAB_USER_KEY, last)
+  return last
+}
+
+function bindTabTo(userId) {
+  storageSet(sessionStorage, TAB_USER_KEY, userId)
+  storageSet(localStorage, LAST_USER_KEY, userId)
+}
+
+function storeToken(base, token) {
   if (!token) return
-  localStorage.setItem(ACCESS_TOKEN_KEY, token)
+  const userId = userIdFromToken(token) || currentUserId()
+  if (!userId) return
+  bindTabTo(userId)
+  storageSet(localStorage, keyFor(base, userId), token)
+}
+
+function readToken(base) {
+  const userId = currentUserId()
+  return userId ? storageGet(localStorage, keyFor(base, userId)) : null
+}
+
+export function setAccessToken(token) {
+  storeToken(ACCESS_TOKEN_KEY, token)
 }
 
 export function getAccessToken() {
-  return localStorage.getItem(ACCESS_TOKEN_KEY)
+  return readToken(ACCESS_TOKEN_KEY)
 }
 
 export function setRefreshToken(token) {
-  if (!token) return
-  localStorage.setItem(REFRESH_TOKEN_KEY, token)
+  storeToken(REFRESH_TOKEN_KEY, token)
 }
 
 export function getRefreshToken() {
-  return localStorage.getItem(REFRESH_TOKEN_KEY)
+  return readToken(REFRESH_TOKEN_KEY)
 }
 
 export function clearAccessToken() {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
+  const userId = currentUserId()
+  if (userId) storageRemove(localStorage, keyFor(ACCESS_TOKEN_KEY, userId))
 }
 
 export function clearRefreshToken() {
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  const userId = currentUserId()
+  if (userId) storageRemove(localStorage, keyFor(REFRESH_TOKEN_KEY, userId))
+}
+
+/**
+ * Sign this tab's account out of this browser; other accounts stay signed
+ * in. A new tab then opens as one of the remaining accounts, if any.
+ */
+function unbindTab() {
+  const userId = storageGet(sessionStorage, TAB_USER_KEY)
+  // Stay signed out in this tab — don't fall back to another stored account.
+  storageSet(sessionStorage, TAB_USER_KEY, NEW_ACCOUNT_TAB)
+  if (userId === NEW_ACCOUNT_TAB) return
+  if (userId && storageGet(localStorage, LAST_USER_KEY) === userId) {
+    const remaining = storedUserIds().filter((id) => id !== userId)
+    if (remaining.length) storageSet(localStorage, LAST_USER_KEY, remaining[0])
+    else storageRemove(localStorage, LAST_USER_KEY)
+  }
 }
 
 export function setLoginPhone(phone) {
@@ -70,6 +200,16 @@ export function clearLoginEmail() {
   sessionStorage.removeItem(LOGIN_EMAIL_KEY)
 }
 
+/**
+ * "Use another account": detach this tab from its account without signing
+ * it out (its other tabs keep working), so this tab can log in as someone
+ * else — e.g. a client next to a super admin.
+ */
+export function startAnotherAccountInTab() {
+  storageSet(sessionStorage, TAB_USER_KEY, NEW_ACCOUNT_TAB)
+  clearLoginSession()
+}
+
 export function clearLoginSession() {
   sessionStorage.removeItem(LOGIN_PHONE_KEY)
   sessionStorage.removeItem(LOGIN_EMAIL_KEY)
@@ -80,6 +220,7 @@ export function clearAuthStorage() {
   clearAccessToken()
   clearRefreshToken()
   clearLoginSession()
+  unbindTab()
 }
 
 export function hasPendingOtpSession() {

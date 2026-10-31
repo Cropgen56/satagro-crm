@@ -4,6 +4,7 @@ import clsx from 'clsx'
 import { ArrowLeft, Building2, Layers, Pencil, Plus, Power, Trash2, X } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import ConfirmModal from '@/components/ui/ConfirmModal'
+import AssignPlanModal from '@/components/client-credits/AssignPlanModal'
 import {
   CreditMeter,
   CreditSummary,
@@ -494,6 +495,8 @@ function ClientCreditsDetail({ clientId, onBack }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [assigning, setAssigning] = useState(false)
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -510,7 +513,7 @@ function ClientCreditsDetail({ clientId, onBack }) {
     return () => {
       cancelled = true
     }
-  }, [clientId, page, farmerId])
+  }, [clientId, page, farmerId, reloadKey])
 
   const farmerName = useMemo(
     () => data?.byFarmer?.find((f) => f.farmerId === farmerId)?.name,
@@ -534,9 +537,19 @@ function ClientCreditsDetail({ clientId, onBack }) {
         <p className="text-sm text-gray-500">Loading…</p>
       ) : data ? (
         <>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{data.client.organizationName}</h2>
-            <p className="text-sm text-gray-500">{data.client.organizationCode}</p>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{data.client.organizationName}</h2>
+              <p className="text-sm text-gray-500">{data.client.organizationCode}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAssigning(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white hover:bg-brand-950"
+            >
+              <Plus className="h-4 w-4" />
+              Assign plan
+            </button>
           </div>
           <CreditSummary summary={data.summary} />
           <UsageByFarmerPanel
@@ -561,6 +574,13 @@ function ClientCreditsDetail({ clientId, onBack }) {
           <PurchasesPanel purchases={data.purchases} />
         </>
       ) : null}
+      {assigning && data ? (
+        <AssignPlanModal
+          client={data.client}
+          onAssigned={() => setReloadKey((k) => k + 1)}
+          onClose={() => setAssigning(false)}
+        />
+      ) : null}
     </div>
   )
 }
@@ -569,14 +589,29 @@ function ClientCreditsTab() {
   const [overview, setOverview] = useState(null)
   const [error, setError] = useState('')
   const [selected, setSelected] = useState(null)
+  const [assignClient, setAssignClient] = useState(null)
 
-  useEffect(() => {
+  const loadOverview = useCallback(() => {
     fetchClientCreditsOverview()
       .then(setOverview)
       .catch((err) => setError(err.message || 'Failed to load client credits'))
   }, [])
 
-  if (selected) return <ClientCreditsDetail clientId={selected} onBack={() => setSelected(null)} />
+  useEffect(() => {
+    loadOverview()
+  }, [loadOverview])
+
+  if (selected) {
+    return (
+      <ClientCreditsDetail
+        clientId={selected}
+        onBack={() => {
+          setSelected(null)
+          loadOverview()
+        }}
+      />
+    )
+  }
 
   const clients = overview?.clients || []
 
@@ -633,7 +668,14 @@ function ClientCreditsTab() {
                       </td>
                       <td className="px-5 py-4 text-sm text-gray-700">{c.credits.purchases}</td>
                       <td className="px-5 py-4 text-sm text-gray-700">{formatInrMinor(c.credits.spentMinor)}</td>
-                      <td className="px-5 py-4 text-right">
+                      <td className="whitespace-nowrap px-5 py-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => setAssignClient(c)}
+                          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand-primary hover:bg-[#E7EFEC]"
+                        >
+                          Assign plan
+                        </button>
                         <button
                           type="button"
                           onClick={() => setSelected(c.id)}
@@ -666,12 +708,21 @@ function ClientCreditsTab() {
                   </span>
                 </span>
                 <span className="text-gray-600">
-                  {formatInrMinor(p.amountMinor)} · {formatDate(p.paidAt)}
+                  {p.paymentMethod === 'assigned' ? 'Assigned' : formatInrMinor(p.amountMinor)} ·{' '}
+                  {formatDate(p.paidAt)}
                 </span>
               </li>
             ))}
           </ul>
         </div>
+      ) : null}
+
+      {assignClient ? (
+        <AssignPlanModal
+          client={assignClient}
+          onAssigned={loadOverview}
+          onClose={() => setAssignClient(null)}
+        />
       ) : null}
     </div>
   )
@@ -699,8 +750,8 @@ export default function ClientCustomSubscriptionPage() {
             Clients custom subscription
           </h1>
           <p className="mt-1 max-w-3xl text-sm text-gray-500">
-            Sell hectare credits to client organizations. Clients activate their farmers' farms from their
-            CRM, and each farm's hectares are deducted from the client's credits.
+            Sell or assign hectare credits to client organizations. Clients activate their farmers' farms
+            from their CRM, and each farm's hectares are deducted from the client's credits.
           </p>
         </header>
 

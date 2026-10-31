@@ -26,13 +26,16 @@ export default function FarmersFilterBar({
           aria-label="Filter by client"
           className="h-10 rounded-lg border border-gray-200 bg-gray-50/80 px-3 text-sm text-gray-700 outline-none transition focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/15"
         >
-          <option value="">All clients</option>
-          <option value="none">Direct BioDrops (no client)</option>
-          {clients.map((client) => (
-            <option key={client.id} value={client.id}>
-              {client.organizationName}
-            </option>
-          ))}
+          <option value="">All farmers</option>
+          <option value="none">BioDrops farmers (direct)</option>
+          <option value="any">All client farmers</option>
+          <optgroup label="Client">
+            {clients.map((client) => (
+              <option key={client.id} value={client.id}>
+                {client.organizationName}
+              </option>
+            ))}
+          </optgroup>
         </select>
       ) : null}
     </div>

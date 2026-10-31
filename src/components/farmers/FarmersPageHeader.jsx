@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom'
 import { UserPlus } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
-export default function FarmersPageHeader() {
-  const navigate = useNavigate()
+export default function FarmersPageHeader({ onAddFarmer }) {
   const { isClientViewer, clientOrganization } = useAuth()
 
   return (
@@ -22,7 +20,7 @@ export default function FarmersPageHeader() {
       {isClientViewer ? null : (
         <button
           type="button"
-          onClick={() => navigate('/farmers/add')}
+          onClick={onAddFarmer}
           className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-950"
         >
           <UserPlus className="h-4 w-4" />

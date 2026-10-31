@@ -1,5 +1,5 @@
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:7070/v1/api/auth'
+// Same backend as every other CRM request (falls back to production).
+import { API_BASE_URL } from '@/lib/api'
 
 export async function fetchInvitationByToken(token) {
   const response = await fetch(

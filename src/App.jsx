@@ -26,8 +26,6 @@ import AccessCardsPage from '@/pages/AccessCardsPage'
 import GenerateCardsPage from '@/pages/GenerateCardsPage'
 import AccessCardDetailPage from '@/pages/AccessCardDetailPage'
 import SubscribersPage from '@/pages/SubscribersPage'
-import ClientCustomSubscriptionPage from '@/pages/ClientCustomSubscriptionPage'
-import ClientSubscriptionPage from '@/pages/ClientSubscriptionPage'
 import ProductsPage from '@/pages/ProductsPage'
 import ProductFormPage from '@/pages/ProductFormPage'
 import OrdersPage from '@/pages/OrdersPage'
@@ -81,8 +79,6 @@ export default function App() {
           <Route path="/subscriptions/cards/:id" element={<AccessCardDetailPage />} />
           <Route path="/subscriptions/cards" element={<AccessCardsPage />} />
           <Route path="/subscriptions/subscribers" element={<SubscribersPage />} />
-          <Route path="/subscriptions/client-plans" element={<ClientCustomSubscriptionPage />} />
-          <Route path="/client-subscription" element={<ClientSubscriptionPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/user-management/:id/edit" element={<EditUserPage />} />

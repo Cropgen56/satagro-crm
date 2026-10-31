@@ -176,7 +176,7 @@ export default function Sidebar() {
     canManageClients,
     clientOrganization,
   } = useAuth()
-  const mainNav = getMainNav({ isClientViewer, canManageClients })
+  const mainNav = getMainNav({ isClientViewer })
   const secondaryNav = getSecondaryNav({ isClientViewer, canManageClients })
 
   const handleLogout = async () => {

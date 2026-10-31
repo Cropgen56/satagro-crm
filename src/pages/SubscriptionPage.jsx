@@ -1,10 +1,8 @@
 import { Link } from 'react-router-dom'
 import SubscriptionHeader from '@/components/subscriptions/SubscriptionHeader'
-import { Building2, CreditCard, Layers } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { CreditCard, Layers } from 'lucide-react'
 
 export default function SubscriptionPage() {
-  const { canManageClients } = useAuth()
   return (
     <div className="min-h-full p-6 lg:p-8">
       <SubscriptionHeader />
@@ -39,23 +37,6 @@ export default function SubscriptionPage() {
             Create and edit per-acre Razorpay plans shown in the BioDrops app.
           </p>
         </Link>
-
-        {canManageClients ? (
-          <Link
-            to="/subscriptions/client-plans"
-            className="group rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition hover:border-brand-primary/30 hover:shadow-md"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#E7EFEC] text-brand-primary">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <h3 className="mt-4 font-semibold text-gray-900 group-hover:text-brand-primary">
-              Clients custom subscription
-            </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              Sell hectare credits to client organizations for all their farmers.
-            </p>
-          </Link>
-        ) : null}
       </div>
     </div>
   )

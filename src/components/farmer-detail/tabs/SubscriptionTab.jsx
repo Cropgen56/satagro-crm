@@ -19,7 +19,6 @@ const STATUS_STYLES = {
 const SOURCE_LABELS = {
   razorpay: 'Razorpay',
   product_card: 'Product card',
-  client_credits: 'Client credits',
   hybrid: 'Card + Razorpay',
   admin: 'Enterprise (Admin)',
 }

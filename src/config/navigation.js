@@ -17,6 +17,11 @@ export const subscriptionNav = {
     { label: 'Subscription plans', path: '/subscriptions/plans' },
     { label: 'Subscription cards', path: '/subscriptions/cards' },
     { label: 'Subscribers', path: '/subscriptions/subscribers' },
+    {
+      label: 'Clients Custom Subscription',
+      path: '/subscriptions/client-plans',
+      requiresClientManagement: true,
+    },
   ],
 }
 
@@ -46,6 +51,13 @@ export const secondaryNav = [
 
 export const clientsNav = { label: 'Clients', path: '/clients', icon: Building2 }
 
+/** A client viewer's own hectare-credit subscription page. */
+export const clientSubscriptionNav = {
+  label: 'Subscription',
+  path: '/client-subscription',
+  icon: CreditCard,
+}
+
 /** Client viewers only monitor their farmers; everything else is hidden. */
 const CLIENT_VIEWER_NAV_PATHS = new Set(['/dashboard', '/farmers'])
 
@@ -55,9 +67,23 @@ const clientViewerAccountNav = [
   { label: 'Profile', path: '/profile', icon: UserRound },
 ]
 
-export function getMainNav({ isClientViewer = false } = {}) {
-  if (!isClientViewer) return mainNav
-  return mainNav.filter((item) => CLIENT_VIEWER_NAV_PATHS.has(item.path))
+export function getMainNav({ isClientViewer = false, canManageClients = false } = {}) {
+  if (isClientViewer) {
+    return [
+      ...mainNav.filter((item) => CLIENT_VIEWER_NAV_PATHS.has(item.path)),
+      clientSubscriptionNav,
+    ]
+  }
+  return mainNav.map((item) =>
+    item.children?.length
+      ? {
+          ...item,
+          children: item.children.filter(
+            (child) => !child.requiresClientManagement || canManageClients,
+          ),
+        }
+      : item,
+  )
 }
 
 export function getSecondaryNav({ isClientViewer = false, canManageClients = false } = {}) {
@@ -65,11 +91,12 @@ export function getSecondaryNav({ isClientViewer = false, canManageClients = fal
   return canManageClients ? [clientsNav, ...secondaryNav] : secondaryNav
 }
 
-/** Pages a client viewer may open: dashboard, farmer list/detail, settings, profile. */
+/** Pages a client viewer may open: dashboard, farmer list/detail, subscription, settings, profile. */
 export function isClientViewerPathAllowed(pathname) {
   if (
     pathname === '/dashboard' ||
     pathname === '/farmers' ||
+    pathname === '/client-subscription' ||
     pathname === '/settings' ||
     pathname === '/profile'
   ) {
@@ -85,7 +112,12 @@ function flattenNavItem(item) {
   return [item]
 }
 
-export const allNavItems = [...mainNav.flatMap(flattenNavItem), clientsNav, ...secondaryNav]
+export const allNavItems = [
+  ...mainNav.flatMap(flattenNavItem),
+  clientSubscriptionNav,
+  clientsNav,
+  ...secondaryNav,
+]
 
 export function isNavChildActive(pathname, childPath) {
   if (childPath === '/subscriptions') {

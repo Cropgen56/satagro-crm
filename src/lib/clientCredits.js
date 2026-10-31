@@ -40,15 +40,6 @@ export function fetchMyClientCreditUsage(params = {}) {
   return apiRequest(`/crm/client-credits/me/usage${buildQueryString(params)}`)
 }
 
-/** status: 'pending' | 'active' | 'all' */
-export function fetchMyClientFarms(params = {}) {
-  return apiRequest(`/crm/client-credits/me/farms${buildQueryString(params)}`)
-}
-
-export function activateMyClientFarm(fieldId) {
-  return apiRequest(`/crm/client-credits/me/farms/${fieldId}/activate`, { method: 'POST' })
-}
-
 export function startClientCreditPurchase(planId) {
   return apiRequest('/crm/client-credits/me/purchases', { method: 'POST', body: { planId } })
 }

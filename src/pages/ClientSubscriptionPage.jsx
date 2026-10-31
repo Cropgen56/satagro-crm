@@ -3,8 +3,6 @@ import { Navigate } from 'react-router-dom'
 import { AlertTriangle, CheckCircle2, Layers } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import PurchasePlanModal from '@/components/client-credits/PurchasePlanModal'
-import ActivateFarmModal from '@/components/client-credits/ActivateFarmModal'
-import FarmActivationsPanel from '@/components/client-credits/FarmActivationsPanel'
 import {
   CreditSummary,
   PurchasesPanel,
@@ -13,7 +11,6 @@ import {
 } from '@/components/client-credits/ClientCreditPanels'
 import { useAuth } from '@/hooks/useAuth'
 import {
-  activateMyClientFarm,
   cancelClientCreditPurchase,
   fetchMyClientCreditPlans,
   fetchMyClientCreditUsage,
@@ -47,7 +44,7 @@ function PlanOffer({ plan, onBuy }) {
         </li>
         <li className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-brand-primary" />
-          Activate your farmers' farms whenever you choose
+          Your farmers never see a payment screen
         </li>
         {plan.featurePlan?.name ? (
           <li className="flex items-center gap-2">
@@ -84,9 +81,6 @@ function ClientSubscription() {
   const [error, setError] = useState('')
   // { plan, stage: 'confirm' | 'processing' | 'success' | 'error', errorMessage }
   const [purchase, setPurchase] = useState(null)
-  // { farm, stage: 'confirm' | 'processing' | 'success' | 'error', errorMessage, result }
-  const [activation, setActivation] = useState(null)
-  const [farmsRefreshKey, setFarmsRefreshKey] = useState(0)
 
   const loadCredits = useCallback(async () => {
     try {
@@ -115,27 +109,6 @@ function ClientSubscription() {
   }, [page, farmerId])
 
   const closePurchase = useCallback(() => setPurchase(null), [])
-  const closeActivation = useCallback(() => setActivation(null), [])
-
-  const confirmActivation = async () => {
-    const { farm } = activation
-    setActivation({ farm, stage: 'processing' })
-    try {
-      const result = await activateMyClientFarm(farm.fieldId)
-      setActivation({ farm, stage: 'success', result })
-      setFarmsRefreshKey((k) => k + 1)
-      setPage(1)
-      await loadCredits()
-    } catch (err) {
-      setActivation({
-        farm,
-        stage: 'error',
-        errorMessage: err.message || 'Could not activate this farm.',
-      })
-      // Already active elsewhere (e.g. another tab): refresh the list.
-      setFarmsRefreshKey((k) => k + 1)
-    }
-  }
 
   const confirmPurchase = async () => {
     const { plan } = purchase
@@ -191,9 +164,9 @@ function ClientSubscription() {
         <header>
           <h1 className="text-2xl font-bold tracking-tight text-brand-primary lg:text-[26px]">Subscription</h1>
           <p className="mt-1 max-w-3xl text-sm text-gray-500">
-            Buy hectare credits for {clientOrganization?.organizationName || 'your organization'}, then
-            activate your farmers' farms below. Each activation deducts the farm's area from your credits
-            (1 credit = 1 hectare) and unlocks all plan features for that farm.
+            Buy hectare credits for {clientOrganization?.organizationName || 'your organization'}. While you
+            have credits, every farm your farmers add is unlocked automatically and its area is deducted
+            here (1 credit = 1 hectare).
           </p>
         </header>
 
@@ -205,7 +178,8 @@ function ClientSubscription() {
           <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              You have no credits left. Buy a plan to activate your farmers' farms.
+              You have no credits left. Your farmers will be asked to pay when they add a farm until you
+              buy a plan.
             </span>
           </div>
         ) : null}
@@ -213,11 +187,6 @@ function ClientSubscription() {
         {summary ? <CreditSummary summary={summary} /> : (
           <div className="h-28 animate-pulse rounded-2xl border border-gray-100 bg-white" />
         )}
-
-        <FarmActivationsPanel
-          refreshKey={farmsRefreshKey}
-          onActivate={(farm) => setActivation({ farm, stage: 'confirm' })}
-        />
 
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-gray-900">Available plans</h2>
@@ -262,15 +231,6 @@ function ClientSubscription() {
         <PurchasesPanel purchases={credits?.purchases || []} />
       </div>
 
-      <ActivateFarmModal
-        farm={activation?.farm}
-        remainingCredits={summary?.remainingCredits || 0}
-        stage={activation?.stage}
-        errorMessage={activation?.errorMessage}
-        result={activation?.result}
-        onConfirm={confirmActivation}
-        onClose={closeActivation}
-      />
       <PurchasePlanModal
         plan={purchase?.plan}
         stage={purchase?.stage}

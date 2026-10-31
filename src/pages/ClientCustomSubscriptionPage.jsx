@@ -116,8 +116,8 @@ function PlanForm({ plan, featurePlans, clients, onSaved, onCancel }) {
             {plan ? 'Edit client plan' : 'New client plan'}
           </h2>
           <p className="mt-0.5 text-sm text-gray-500">
-            1 credit = 1 hectare. When a client buys this plan, each farm their farmers add is
-            unlocked automatically and its hectares are deducted from the client's credits.
+            1 credit = 1 hectare. After a client buys this plan, they activate each of their farmers'
+            farms from their CRM, and the farm's hectares are deducted from their credits.
           </p>
         </div>
         <button
@@ -699,8 +699,8 @@ export default function ClientCustomSubscriptionPage() {
             Clients custom subscription
           </h1>
           <p className="mt-1 max-w-3xl text-sm text-gray-500">
-            Sell hectare credits to client organizations. Their farmers add farms without seeing any
-            payment screen. Each farm's hectares are deducted from the client's credits.
+            Sell hectare credits to client organizations. Clients activate their farmers' farms from their
+            CRM, and each farm's hectares are deducted from the client's credits.
           </p>
         </header>
 

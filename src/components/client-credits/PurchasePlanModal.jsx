@@ -62,8 +62,8 @@ export default function PurchasePlanModal({ plan, stage, errorMessage, onConfirm
               Plan purchased
             </h2>
             <p className="mt-2 text-sm text-gray-500">
-              {formatCredits(plan.totalHectares)} hectares of credits were added to your account. Every
-              new farm your farmers add is now unlocked automatically.
+              {formatCredits(plan.totalHectares)} hectares of credits were added to your account. You can
+              now activate your farmers' farms from Farm activations.
             </p>
             <button
               type="button"

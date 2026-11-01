@@ -1,7 +1,8 @@
-import { Search } from 'lucide-react'
+import { Search, X, Loader2 } from 'lucide-react'
 
 export default function FarmersFilterBar({
   search = '',
+  searching = false,
   onSearchChange,
   clients = [],
   clientId = '',
@@ -12,12 +13,32 @@ export default function FarmersFilterBar({
       <div className="relative w-full max-w-md">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
         <input
-          type="search"
-          placeholder="Search name, phone, or email..."
+          type="text"
+          inputMode="search"
+          aria-label="Search farmers"
+          placeholder="Search name, phone, email, village, or FR-ID..."
           value={search}
           onChange={(e) => onSearchChange?.(e.target.value)}
-          className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50/80 pl-10 pr-3 text-sm outline-none transition focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/15"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' && search) onSearchChange?.('')
+          }}
+          className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50/80 pl-10 pr-16 text-sm outline-none transition focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/15"
         />
+        <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+          {searching ? (
+            <Loader2 className="h-4 w-4 animate-spin text-gray-400" aria-label="Searching" />
+          ) : null}
+          {search ? (
+            <button
+              type="button"
+              onClick={() => onSearchChange?.('')}
+              aria-label="Clear search"
+              className="rounded-md p-1 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
       </div>
       {clients.length > 0 ? (
         <select

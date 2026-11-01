@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import UserManagementHeader from '@/components/usermanagement/UserManagementHeader'
 import UserManagementKpiCards from '@/components/usermanagement/UserManagementKpiCards'
 import UserManagementTable from '@/components/usermanagement/UserManagementTable'
@@ -19,8 +19,10 @@ export default function UserManagementPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearch = useDebouncedValue(searchQuery)
+  // Only the latest list request may update state; slower earlier responses are dropped.
+  const requestSeq = useRef(0)
 
-  const pendingCount = useMemo(() => stats?.pending ?? 0, [stats])
+  const pendingCount = useMemo(() => stats?.pendingInvitations ?? 0, [stats])
 
   const loadStats = useCallback(async () => {
     try {
@@ -36,6 +38,7 @@ export default function UserManagementPage() {
 
   const loadUsers = useCallback(
     async (page = 1, status = statusFilter, search = debouncedSearch) => {
+      const seq = ++requestSeq.current
       try {
         setLoading(true)
         setError('')
@@ -46,12 +49,19 @@ export default function UserManagementPage() {
           ...(apiStatus !== 'all' ? { status: apiStatus } : {}),
           ...(search?.trim() ? { search: search.trim() } : {}),
         })
+        if (seq !== requestSeq.current) return
+        // Removing the last row of the last page: show the previous page
+        // instead of an empty table.
+        if (!(usersRes?.users || []).length && page > 1) {
+          return loadUsers(page - 1, status, search)
+        }
         setUsers(usersRes?.users || [])
         setPagination(usersRes?.pagination || {})
       } catch (err) {
+        if (seq !== requestSeq.current) return
         setError(err.message || 'Failed to load team members')
       } finally {
-        setLoading(false)
+        if (seq === requestSeq.current) setLoading(false)
       }
     },
     [statusFilter, debouncedSearch]
@@ -89,6 +99,7 @@ export default function UserManagementPage() {
           pagination={pagination}
           loading={loading}
           search={searchQuery}
+          searchPending={searchQuery.trim() !== debouncedSearch.trim()}
           status={statusFilter}
           onSearchChange={setSearchQuery}
           onPageChange={(page) => loadUsers(page, statusFilter, debouncedSearch)}

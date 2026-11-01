@@ -43,6 +43,7 @@ export default function FarmersTable({
   loading = false,
   pagination = {},
   search = '',
+  searchPending = false,
   onSearchChange,
   onPageChange,
   showClientColumn = false,
@@ -70,11 +71,16 @@ export default function FarmersTable({
 
   const rangeStart = total ? (currentPage - 1) * limit + 1 : 0
   const rangeEnd = Math.min(currentPage * limit, total)
+  // Full placeholder only on first load; refetches (search/filter/page) keep rows visible.
+  const initialLoading = loading && farmers.length === 0
+  const refreshing = loading && farmers.length > 0
+  const hasSearch = search.trim().length > 0
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
       <FarmersFilterBar
         search={search}
+        searching={hasSearch && (searchPending || loading)}
         onSearchChange={onSearchChange}
         clients={showClientColumn ? clients : []}
         clientId={clientId}
@@ -92,8 +98,14 @@ export default function FarmersTable({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
+          <tbody
+            className={clsx(
+              'divide-y divide-gray-100 transition-opacity',
+              refreshing && 'opacity-60',
+            )}
+            aria-busy={loading}
+          >
+            {initialLoading ? (
               <tr>
                 <td
                   colSpan={columns.length}
@@ -106,9 +118,25 @@ export default function FarmersTable({
               <tr>
                 <td
                   colSpan={columns.length}
-                  className="px-5 py-12 text-center text-sm text-gray-500"
+                  className="px-5 py-12 text-center"
                 >
-                  No farmers match your search.
+                  <p className="text-sm font-medium text-gray-900">
+                    {hasSearch ? `No farmers match “${search.trim()}”` : 'No farmers match this filter'}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {hasSearch
+                      ? 'Check the spelling, try fewer words, or clear the search.'
+                      : 'Try a different client filter.'}
+                  </p>
+                  {hasSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => onSearchChange?.('')}
+                      className="mt-3 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+                    >
+                      Clear search
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ) : (

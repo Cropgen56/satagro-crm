@@ -6,6 +6,7 @@ import {
   fetchUserById,
   suspendUserAssignment,
   deleteCrmUser,
+  updateCrmUser,
 } from '@/lib/usermanagement'
 import { useAuth } from '@/hooks/useAuth'
 import { isSameUser } from '@/lib/auth'
@@ -62,6 +63,20 @@ export default function UserDetailPage() {
     }
   }
 
+  const handleReactivate = async () => {
+    if (!window.confirm(`Restore CRM access for ${userData?.name}?`)) return
+    try {
+      setActionLoading(true)
+      setError('')
+      await updateCrmUser(id, { assignmentStatus: 'active' })
+      await loadUser()
+    } catch (err) {
+      setError(err.message || 'Failed to reactivate user')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   const handleDelete = async () => {
     if (
       !window.confirm(
@@ -89,6 +104,8 @@ export default function UserDetailPage() {
           user={userData}
           loading={loading}
           onSuspend={handleSuspend}
+          onReactivate={handleReactivate}
+          reactivateDisabled={actionLoading || isSelf || !userData?.canManage}
           onEdit={() => navigate(`/user-management/${id}/edit`)}
           onDelete={handleDelete}
           suspendDisabled={
@@ -98,7 +115,7 @@ export default function UserDetailPage() {
             userData?.assignmentStatus === 'suspended' ||
             userData?.status === 'DISABLED'
           }
-          actionDisabled={actionLoading || !userData?.canManage}
+          actionDisabled={actionLoading || isSelf || !userData?.canManage}
           deleteDisabled={actionLoading || isSelf || !userData?.canManage}
           deleteHint={
             isSelf

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import clsx from 'clsx'
-import { Building2, Check, Copy, Pencil, Plus, X } from 'lucide-react'
+import { Building2, Check, Copy, Pencil, Plus, Search, X } from 'lucide-react'
 import EmptyState from '@/components/ui/EmptyState'
 import { createClient, fetchClients, updateClient } from '@/lib/clients'
 import { useAuth } from '@/hooks/useAuth'
@@ -312,6 +312,49 @@ export default function ClientsPage() {
   return <ClientsManager />
 }
 
+const CLIENT_STATUS_FILTERS = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+]
+
+const digitsOnly = (value) => String(value || '').replace(/\D/g, '')
+
+/**
+ * Client-side search over everything the row shows (the full client list is
+ * already loaded). Every word must match somewhere; phone-like words compare
+ * digits only, so "98765 43210" and "+91-98765" both work.
+ */
+function matchesClientSearch(client, terms) {
+  if (!terms.length) return true
+  const haystack = [
+    client.organizationName,
+    client.organizationCode,
+    client.email,
+    client.phoneNumber,
+    client.address?.city,
+    client.address?.state,
+    client.address?.district,
+    ...(client.logins || []).flatMap((l) => [l?.email, l?.firstName, l?.lastName]),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
+  const phoneDigits = [client.phoneNumber, ...(client.logins || []).map((l) => l?.phone)]
+    .map(digitsOnly)
+    .join(' ')
+
+  return terms.every((term) => {
+    if (haystack.includes(term)) return true
+    const termDigits = digitsOnly(term)
+    return (
+      termDigits.length >= 3 &&
+      termDigits.length === term.replace(/[\s+\-().]/g, '').length &&
+      phoneDigits.includes(termDigits)
+    )
+  })
+}
+
 function ClientsManager() {
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
@@ -320,6 +363,23 @@ function ClientsManager() {
   const [showForm, setShowForm] = useState(false)
   const [busyId, setBusyId] = useState(null)
   const [editing, setEditing] = useState(null)
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+
+  const visibleClients = useMemo(() => {
+    const terms = search.toLowerCase().split(/\s+/).filter(Boolean)
+    return clients.filter(
+      (c) =>
+        (statusFilter === 'all' || (c.status === 'active') === (statusFilter === 'active')) &&
+        matchesClientSearch(c, terms),
+    )
+  }, [clients, search, statusFilter])
+  const hasSearch = search.trim().length > 0
+  const isFiltered = hasSearch || statusFilter !== 'all'
+  const clearFilters = () => {
+    setSearch('')
+    setStatusFilter('all')
+  }
 
   const load = useCallback(async () => {
     try {
@@ -446,6 +506,52 @@ function ClientsManager() {
           />
         ) : (
           <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
+            <div className="flex flex-col gap-4 border-b border-gray-100 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+              <div className="relative max-w-md flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  inputMode="search"
+                  aria-label="Search clients"
+                  placeholder="Search organization, code, email, phone, or city..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape' && search) setSearch('')
+                  }}
+                  className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50/80 pl-10 pr-10 text-sm outline-none transition focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/15"
+                />
+                {search ? (
+                  <button
+                    type="button"
+                    onClick={() => setSearch('')}
+                    aria-label="Clear search"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {CLIENT_STATUS_FILTERS.map((f) => (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setStatusFilter(f.value)}
+                    className={clsx(
+                      'rounded-lg px-3 py-1.5 text-xs font-semibold transition',
+                      statusFilter === f.value
+                        ? 'bg-brand-primary text-white shadow-sm'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="overflow-x-auto">
               <table className="min-w-full text-left">
                 <thead>
@@ -464,8 +570,28 @@ function ClientsManager() {
                         Loading clients…
                       </td>
                     </tr>
+                  ) : visibleClients.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-5 py-12 text-center">
+                        <p className="text-sm font-medium text-gray-900">
+                          {hasSearch
+                            ? `No clients match “${search.trim()}”`
+                            : 'No clients match this filter'}
+                        </p>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Check the spelling, try fewer words, or clear the filters.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={clearFilters}
+                          className="mt-3 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+                        >
+                          Clear filters
+                        </button>
+                      </td>
+                    </tr>
                   ) : (
-                    clients.map((client) => (
+                    visibleClients.map((client) => (
                       <tr key={client.id} className="hover:bg-gray-50/60">
                         <td className="px-5 py-4">
                           <p className="text-sm font-semibold text-gray-900">
@@ -540,6 +666,14 @@ function ClientsManager() {
                 </tbody>
               </table>
             </div>
+
+            {!loading && clients.length > 0 ? (
+              <div className="border-t border-gray-100 px-5 py-3 text-sm text-gray-500">
+                {isFiltered
+                  ? `${visibleClients.length} of ${clients.length} clients`
+                  : `${clients.length} client${clients.length !== 1 ? 's' : ''}`}
+              </div>
+            ) : null}
           </div>
         )}
       </div>

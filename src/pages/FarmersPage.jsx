@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FarmersPageHeader from '@/components/farmers/FarmersPageHeader'
 import FarmersTable from '@/components/farmers/FarmersTable'
@@ -21,6 +21,8 @@ export default function FarmersPage() {
   const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search)
+  // Only the latest list request may update state; slower earlier responses are dropped.
+  const requestSeq = useRef(0)
   const { isClientViewer, canManageClients, clientOrganization } = useAuth()
   const [clients, setClients] = useState([])
   const [clientId, setClientId] = useState('')
@@ -51,6 +53,7 @@ export default function FarmersPage() {
 
   const loadFarmers = useCallback(
     async (page = 1, searchQuery = debouncedSearch) => {
+      const seq = ++requestSeq.current
       try {
         setLoading(true)
         setError('')
@@ -60,13 +63,19 @@ export default function FarmersPage() {
           ...(searchQuery?.trim() ? { search: searchQuery.trim() } : {}),
           ...(clientId ? { clientId } : {}),
         })
+        if (seq !== requestSeq.current) return
+        // Deleting the last farmer on the last page: step back a page.
+        if (!(listRes?.farmers || []).length && page > 1) {
+          return loadFarmers(page - 1, searchQuery)
+        }
         setFarmers(listRes?.farmers || [])
         setPagination(listRes?.pagination || {})
       } catch (err) {
+        if (seq !== requestSeq.current) return
         setError(err.message || 'Failed to load farmers')
         setFarmers([])
       } finally {
-        setLoading(false)
+        if (seq === requestSeq.current) setLoading(false)
       }
     },
     [debouncedSearch, clientId],
@@ -172,7 +181,9 @@ export default function FarmersPage() {
           </div>
         ) : null}
 
-        {!loading && farmers.length === 0 && !error ? (
+        {/* "No farmers yet" only when unfiltered — a search/filter with no hits
+            keeps the table (and its search box) so the query can be edited. */}
+        {!loading && farmers.length === 0 && !error && !search.trim() && !debouncedSearch.trim() && !clientId ? (
           <EmptyState
             icon={Sprout}
             title="No farmers yet"
@@ -188,6 +199,7 @@ export default function FarmersPage() {
             loading={loading}
             pagination={pagination}
             search={search}
+            searchPending={search.trim() !== debouncedSearch.trim()}
             onSearchChange={setSearch}
             onPageChange={(page) => loadFarmers(page, debouncedSearch)}
             showClientColumn={canManageClients}

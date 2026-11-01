@@ -12,7 +12,7 @@ export default function InvitationSentFooter() {
         <Shield className="mt-1 h-5 w-5 text-brand-primary" />
 
         <p className="max-w-[460px] text-[13px] leading-6 text-[#6B7280]">
-          Security Note: Invitation link expires in 48 hours. Account will remain inactive until registration is complete.
+          Security Note: Invitation link expires in 7 days. Account will remain inactive until registration is complete.
         </p>
       </div>
 

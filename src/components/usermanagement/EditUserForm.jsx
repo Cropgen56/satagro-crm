@@ -69,6 +69,8 @@ export default function EditUserForm({ userId }) {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [phone, setPhone] = useState('')
+  // Stored phone as loaded — an unchanged non-Indian number must not block saving.
+  const [originalPhone, setOriginalPhone] = useState('')
   const [activeRole, setActiveRole] = useState('district')
   const [countryCode, setCountryCode] = useState('IN')
   const [stateCode, setStateCode] = useState('')
@@ -143,12 +145,20 @@ export default function EditUserForm({ userId }) {
         }
         setCanManageUser(true)
         const assignmentList = userRes?.assignments || []
+        // Same assignment the server edits (its primary = highest level),
+        // not just the first active one.
         const primary =
-          assignmentList.find((a) => a.status === 'active') || assignmentList[0]
+          assignmentList.find((a) => a.id === user?.assignmentId) ||
+          assignmentList.find((a) => a.status === 'active') ||
+          assignmentList[0]
 
         setFullName(user?.name || '')
-        setEmail(user?.email || user?.invitationEmail || '')
-        setPhone(user?.phone?.replace(/^\+91/, '') || user?.phone || '')
+        // Only the account's own email — a pending invite address saved here
+        // could clash with another account.
+        setEmail(user?.email || '')
+        const loadedPhone = user?.phone?.replace(/^\+91/, '') || user?.phone || ''
+        setPhone(loadedPhone)
+        setOriginalPhone(loadedPhone)
         const loadedLevel = user?.adminLevel || primary?.level || 'district'
         setInitialLevel(loadedLevel)
         setActiveRole(loadedLevel)
@@ -378,7 +388,8 @@ export default function EditUserForm({ userId }) {
       setError('Full name is required')
       return
     }
-    if (!phone.trim() || !isValidIndianMobile(phone)) {
+    const phoneChanged = phone.trim() !== originalPhone.trim()
+    if (!phone.trim() || (phoneChanged && !isValidIndianMobile(phone))) {
       setError('Enter a valid 10-digit Indian mobile number')
       return
     }
@@ -396,7 +407,8 @@ export default function EditUserForm({ userId }) {
       await updateCrmUser(userId, {
         fullName: fullName.trim(),
         email: email.trim() || null,
-        phone: normalizeIndianPhone(phone),
+        // Unchanged phone is not re-sent (it may be a valid non-Indian number).
+        ...(phoneChanged ? { phone: normalizeIndianPhone(phone) } : {}),
         level: activeRole,
         countryCode: needsCountry(activeRole) ? countryCode : null,
         stateCode: needsState(activeRole) ? stateCode : null,

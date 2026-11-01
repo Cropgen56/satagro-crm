@@ -18,9 +18,11 @@ export default function UserDetailHeader({
   user,
   loading,
   onSuspend,
+  onReactivate,
   onEdit,
   onDelete,
   suspendDisabled,
+  reactivateDisabled = false,
   actionDisabled,
   deleteDisabled = false,
   deleteHint = '',
@@ -30,6 +32,8 @@ export default function UserDetailHeader({
     .filter((v) => v && v !== '—')
     .slice(0, 2)
 
+  const isSuspended =
+    user?.status === 'DISABLED' || user?.assignmentStatus === 'suspended'
   const displayStatus = user?.statusLabel || user?.status || 'PENDING'
   const statusColor =
     user?.status === 'ACTIVE'
@@ -71,14 +75,25 @@ export default function UserDetailHeader({
             Edit
           </button>
 
-          <button
-            type="button"
-            disabled={suspendDisabled}
-            onClick={onSuspend}
-            className="rounded-lg border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-800 shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {user?.status === 'DISABLED' ? 'Suspended' : 'Suspend'}
-          </button>
+          {isSuspended && onReactivate ? (
+            <button
+              type="button"
+              disabled={reactivateDisabled}
+              onClick={onReactivate}
+              className="rounded-lg border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Reactivate
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={suspendDisabled}
+              onClick={onSuspend}
+              className="rounded-lg border border-amber-200 bg-white px-4 py-2 text-sm font-semibold text-amber-800 shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isSuspended ? 'Suspended' : 'Suspend'}
+            </button>
+          )}
 
           <button
             type="button"

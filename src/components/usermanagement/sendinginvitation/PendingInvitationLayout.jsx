@@ -12,6 +12,7 @@ export default function PendingInvitationLayout() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [resendingId, setResendingId] = useState(null)
+  const [notice, setNotice] = useState('')
 
   useEffect(() => {
     let active = true
@@ -40,6 +41,11 @@ export default function PendingInvitationLayout() {
 
       <div className="mt-8">
         {error ? <p className="mb-4 text-sm text-red-600">{error}</p> : null}
+        {notice ? (
+          <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+            {notice}
+          </p>
+        ) : null}
 
         {loading ? (
           <p className="text-sm text-gray-500">Loading pending invitations...</p>
@@ -69,9 +75,15 @@ export default function PendingInvitationLayout() {
                   </div>
                 </button>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                    AWAITING VERIFY
-                  </span>
+                  {user.expired ? (
+                    <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700">
+                      LINK EXPIRED
+                    </span>
+                  ) : (
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                      AWAITING VERIFY
+                    </span>
+                  )}
                   <button
                     type="button"
                     disabled={resendingId === user.id}
@@ -79,7 +91,15 @@ export default function PendingInvitationLayout() {
                       e.stopPropagation()
                       try {
                         setResendingId(user.id)
+                        setError('')
+                        setNotice('')
                         await resendInvitationEmail(user.id)
+                        setNotice(
+                          `New invitation link sent to ${user.invitationEmail || user.email}. It is valid for 7 days.`,
+                        )
+                        setUsers((prev) =>
+                          prev.map((u) => (u.id === user.id ? { ...u, expired: false } : u)),
+                        )
                       } catch (err) {
                         setError(err.message || 'Resend failed')
                       } finally {

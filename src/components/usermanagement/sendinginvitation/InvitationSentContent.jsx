@@ -1,4 +1,5 @@
 import { Check, Mail, MapPin, AlertCircle } from 'lucide-react'
+import { useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { UserAvatar } from '@/components/ui/EmptyState'
 
@@ -10,11 +11,38 @@ const LEVEL_LABELS = {
   ground: 'Field Agent',
 }
 
-export default function InvitationSentContent() {
+const LAST_INVITE_KEY = 'satagro:lastInvitationSent'
+
+/**
+ * Router state is lost on a page refresh, so keep the last confirmation in
+ * sessionStorage (this tab only) and fall back to it.
+ */
+function useInvitationState() {
   const { state } = useLocation()
+  return useMemo(() => {
+    if (state?.invitation) {
+      try {
+        sessionStorage.setItem(LAST_INVITE_KEY, JSON.stringify(state))
+      } catch {
+        /* storage unavailable — page still renders from router state */
+      }
+      return state
+    }
+    try {
+      return JSON.parse(sessionStorage.getItem(LAST_INVITE_KEY) || 'null')
+    } catch {
+      return null
+    }
+  }, [state])
+}
+
+export default function InvitationSentContent() {
+  const state = useInvitationState()
   const invitation = state?.invitation
   const emailSent = state?.emailSent
   const emailError = state?.emailError
+  const upgradedFromFarmer = state?.response?.invitation?.upgradedFromFarmer === true
+  const existingAccount = state?.response?.invitation?.existingAccount === true
 
   return (
     <>
@@ -48,6 +76,13 @@ export default function InvitationSentContent() {
               </>
             )}
           </p>
+          {existingAccount ? (
+            <p className="mx-auto mt-4 max-w-[520px] rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm text-emerald-800">
+              {upgradedFromFarmer
+                ? 'This registered farmer was upgraded to CRM staff on the same account — their farms, history and client credits stay linked.'
+                : 'This existing account was given CRM access — no new account was created.'}
+            </p>
+          ) : null}
           {emailSent ? (
             <p className="mx-auto mt-3 flex max-w-[520px] items-center justify-center gap-2 text-sm text-brand-primary">
               <Mail className="h-4 w-4" />
@@ -103,9 +138,13 @@ export default function InvitationSentContent() {
                   <h4 className="text-[15px] font-semibold text-brand-primary">Region</h4>
                 </div>
                 <p className="mt-2 text-sm text-[#374151]">
-                  {[invitation.countryCode, invitation.stateCode, invitation.districtCode]
+                  {[
+                    invitation.districtName || invitation.districtCode,
+                    invitation.stateName || invitation.stateCode,
+                    invitation.countryName || invitation.countryCode,
+                  ]
                     .filter(Boolean)
-                    .join(' · ')}
+                    .join(', ')}
                 </p>
               </div>
             )}

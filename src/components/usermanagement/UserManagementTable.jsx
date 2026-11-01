@@ -1,7 +1,7 @@
 import clsx from 'clsx'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, ChevronLeft, ChevronRight, Pencil } from 'lucide-react'
+import { Search, ChevronLeft, ChevronRight, Pencil, X, Loader2 } from 'lucide-react'
 import { UserAvatar } from '@/components/ui/EmptyState'
 import UserRowActions from '@/components/usermanagement/UserRowActions'
 import { useAuth } from '@/hooks/useAuth'
@@ -54,6 +54,7 @@ export default function UserManagementTable({
   loading = false,
   pagination = {},
   search = '',
+  searchPending = false,
   status = 'all',
   onPageChange,
   onStatusFilterChange,
@@ -79,6 +80,11 @@ export default function UserManagementTable({
 
   const rangeStart = total ? (currentPage - 1) * limit + 1 : 0
   const rangeEnd = Math.min(currentPage * limit, total)
+  // Full placeholder only on first load; refetches (search/filter/page) keep rows visible.
+  const initialLoading = loading && users.length === 0
+  const refreshing = loading && users.length > 0
+  const busy = searchPending || loading
+  const hasSearch = search.trim().length > 0
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-white shadow-sm">
@@ -87,12 +93,32 @@ export default function UserManagementTable({
         <div className="relative max-w-md flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
-            type="search"
-            placeholder="Search name, email, or phone..."
+            type="text"
+            inputMode="search"
+            aria-label="Search team members"
+            placeholder="Search name, email, phone, role, or region..."
             value={search}
             onChange={(e) => onSearchChange?.(e.target.value)}
-            className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50/80 pl-10 pr-3 text-sm outline-none transition focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/15"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape' && search) onSearchChange?.('')
+            }}
+            className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50/80 pl-10 pr-16 text-sm outline-none transition focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/15"
           />
+          <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+            {busy && hasSearch ? (
+              <Loader2 className="h-4 w-4 animate-spin text-gray-400" aria-label="Searching" />
+            ) : null}
+            {search ? (
+              <button
+                type="button"
+                onClick={() => onSearchChange?.('')}
+                aria-label="Clear search"
+                className="rounded-md p-1 text-gray-400 transition hover:bg-gray-200 hover:text-gray-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-1.5">
@@ -126,8 +152,14 @@ export default function UserManagementTable({
               <th className="w-[100px] px-5 py-3.5 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
+          <tbody
+            className={clsx(
+              'divide-y divide-gray-100 transition-opacity',
+              refreshing && 'opacity-60'
+            )}
+            aria-busy={loading}
+          >
+            {initialLoading ? (
               <tr>
                 <td colSpan={5} className="px-5 py-16 text-center text-sm text-gray-500">
                   <div className="mx-auto h-8 w-8 animate-pulse rounded-full bg-gray-200" />
@@ -137,10 +169,23 @@ export default function UserManagementTable({
             ) : users.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-5 py-16 text-center">
-                  <p className="text-sm font-medium text-gray-900">No members found</p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Try another filter or invite someone new.
+                  <p className="text-sm font-medium text-gray-900">
+                    {hasSearch ? `No members match “${search.trim()}”` : 'No members found'}
                   </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {hasSearch
+                      ? 'Check the spelling, try fewer words, or clear the search.'
+                      : 'Try another filter or invite someone new.'}
+                  </p>
+                  {hasSearch ? (
+                    <button
+                      type="button"
+                      onClick={() => onSearchChange?.('')}
+                      className="mt-3 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-200"
+                    >
+                      Clear search
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ) : (

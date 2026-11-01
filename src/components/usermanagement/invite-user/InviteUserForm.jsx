@@ -1,6 +1,12 @@
 import clsx from 'clsx'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  Loader2,
+  MapPin,
+  Phone,
+  Mail,
+  UserCheck,
+  X,
   User2,
   BriefcaseBusiness,
   Network,
@@ -38,6 +44,25 @@ import {
   getDefaultGeoForActor,
 } from '@/lib/adminHierarchy'
 
+/** Match a stored geo value (code like "MH" or name like "KERALA") to a dropdown row. */
+function findGeoOption(options, value) {
+  const v = String(value || '').trim().toUpperCase()
+  if (!v) return null
+  return (
+    options.find((o) => o.code?.toUpperCase() === v) ||
+    options.find((o) => o.name?.toUpperCase() === v) ||
+    options.find((o) => o.name?.toUpperCase().startsWith(v) || v.startsWith(o.name?.toUpperCase() || '\u0000')) ||
+    null
+  )
+}
+
+/** "+919322396236" → "9322396236" for the 10-digit input next to the +91 box. */
+function toLocalMobile(phone) {
+  const digits = String(phone || '').replace(/\D/g, '')
+  if (digits.length === 12 && digits.startsWith('91')) return digits.slice(2)
+  return digits.length === 10 ? digits : String(phone || '')
+}
+
 export default function InviteUserForm() {
   const navigate = useNavigate()
   const { hierarchy } = useAuth()
@@ -72,6 +97,13 @@ export default function InviteUserForm() {
   const [checkingScope, setCheckingScope] = useState(false)
   const [inviteUserStatus, setInviteUserStatus] = useState(null)
   const [checkingInviteUser, setCheckingInviteUser] = useState(false)
+  // Existing account whose details were loaded into the form (by id), and
+  // which values we filled so later edits by the admin are never overwritten.
+  const [prefilledUserId, setPrefilledUserId] = useState(null)
+  const prefilledValues = useRef({})
+  // Region to select once the async state/district lists have loaded.
+  const geoPrefill = useRef(null)
+  const existingUser = inviteUserStatus?.existingUser || null
 
   useEffect(() => {
     if (!availableRoles.some((role) => role.level === activeRole)) {
@@ -141,7 +173,10 @@ export default function InviteUserForm() {
         if (!active) return
         const filtered = filterStatesForActor(actor, countryCode, rows)
         setStates(filtered)
+        const wanted = findGeoOption(filtered, geoPrefill.current?.state)
+        if (geoPrefill.current) geoPrefill.current.state = null
         setStateCode((prev) => {
+          if (wanted) return wanted.code
           if (prev && filtered.some((s) => s.code === prev)) return prev
           return filtered[0]?.code || ''
         })
@@ -177,7 +212,10 @@ export default function InviteUserForm() {
           rows,
         )
         setDistricts(filtered)
+        const wanted = findGeoOption(filtered, geoPrefill.current?.district)
+        if (geoPrefill.current) geoPrefill.current.district = null
         setDistrictCode((prev) => {
+          if (wanted) return wanted.code
           if (prev && filtered.some((d) => d.code === prev)) return prev
           return filtered[0]?.code || ''
         })
@@ -305,6 +343,72 @@ export default function InviteUserForm() {
     }
   }, [phone, email])
 
+  // Existing account found → load their details into the form (once per account).
+  useEffect(() => {
+    if (!existingUser?.id) {
+      if (prefilledUserId && !checkingInviteUser) setPrefilledUserId(null)
+      return
+    }
+    if (existingUser.id === prefilledUserId) return
+
+    const prev = prefilledValues.current
+    const next = {}
+    // Only fill fields that are empty or still hold what we filled before
+    // (e.g. switching from one matched account to another).
+    const canFill = (current, key) => !current.trim() || current === prev[key]
+
+    if (existingUser.name && canFill(fullName, 'name')) {
+      setFullName(existingUser.name)
+      next.name = existingUser.name
+    }
+    if (existingUser.email && canFill(email, 'email')) {
+      setEmail(existingUser.email)
+      next.email = existingUser.email
+    }
+    const localPhone = existingUser.phone ? toLocalMobile(existingUser.phone) : ''
+    if (localPhone && canFill(phone, 'phone')) {
+      setPhone(localPhone)
+      next.phone = localPhone
+    }
+    prefilledValues.current = next
+
+    // Region: country → state → district (district falls back to city, which
+    // is where the farmer app stores it).
+    const wantState = existingUser.state
+    const wantDistrict = existingUser.district || existingUser.city
+    if (existingUser.country || wantState) {
+      geoPrefill.current = { state: wantState, district: wantDistrict }
+      const country = findGeoOption(countries, existingUser.country)
+      if (country && country.code !== countryCode) {
+        setCountryCode(country.code) // states effect picks up geoPrefill.state
+      } else {
+        const st = findGeoOption(states, wantState)
+        geoPrefill.current.state = null
+        if (st && st.code !== stateCode) {
+          setStateCode(st.code) // districts effect picks up geoPrefill.district
+        } else {
+          const d = findGeoOption(districts, wantDistrict)
+          geoPrefill.current.district = null
+          if (d) setDistrictCode(d.code)
+        }
+      }
+    }
+
+    setPrefilledUserId(existingUser.id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [existingUser?.id, checkingInviteUser])
+
+  const clearExistingUser = () => {
+    const prev = prefilledValues.current
+    if (prev.name && fullName === prev.name) setFullName('')
+    setEmail('')
+    setPhone('')
+    prefilledValues.current = {}
+    geoPrefill.current = null
+    setPrefilledUserId(null)
+    setInviteUserStatus(null)
+  }
+
   const scopeGeoReady = isScopeGeoReady(activeRole, {
     countryCode,
     stateCode,
@@ -380,7 +484,19 @@ export default function InviteUserForm() {
       const result = await createInvitation(payload)
       navigate('/invitation-sent', {
         state: {
-          invitation: payload,
+          invitation: {
+            ...payload,
+            // Readable region for the confirmation page (it only had codes).
+            countryName: payload.countryCode
+              ? countries.find((c) => c.code === payload.countryCode)?.name
+              : null,
+            stateName: payload.stateCode
+              ? states.find((s) => s.code === payload.stateCode)?.name
+              : null,
+            districtName: payload.districtCode
+              ? districts.find((d) => d.code === payload.districtCode)?.name
+              : null,
+          },
           response: result,
           emailSent: result?.emailSent,
           emailError: result?.emailError,
@@ -457,12 +573,81 @@ export default function InviteUserForm() {
         </div>
 
         {checkingInviteUser ? (
-          <p className="mt-3 text-[12px] text-[#6B7280]">
+          <p className="mt-3 flex items-center gap-2 text-[12px] text-[#6B7280]">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
             Checking whether this phone or email is already registered...
           </p>
         ) : null}
 
-        {!checkingInviteUser && inviteUserStatus?.message ? (
+        {!checkingInviteUser && existingUser && inviteUserStatus?.canInvite ? (
+          <div
+            role="status"
+            className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-4"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-primary text-sm font-semibold text-white">
+                  {(existingUser.name || existingUser.email || '?').charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-[#1F2937]">
+                    <UserCheck className="h-4 w-4 text-emerald-700" />
+                    {existingUser.name || 'Registered user'}
+                    <span
+                      className={clsx(
+                        'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide',
+                        existingUser.isFarmer
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-gray-200 text-gray-700',
+                      )}
+                    >
+                      {existingUser.isFarmer ? 'Farmer' : existingUser.role || 'User'}
+                    </span>
+                    {existingUser.isFarmer ? (
+                      <span className="text-[11px] font-medium text-emerald-800">→ CRM staff</span>
+                    ) : null}
+                  </p>
+                  <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-[#4B5563]">
+                    {existingUser.phone ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {existingUser.phone}
+                      </span>
+                    ) : null}
+                    {existingUser.email ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Mail className="h-3 w-3" /> {existingUser.email}
+                      </span>
+                    ) : null}
+                    {[existingUser.village, existingUser.district || existingUser.city, existingUser.state]
+                      .filter(Boolean).length ? (
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {[existingUser.village, existingUser.district || existingUser.city, existingUser.state]
+                          .filter(Boolean)
+                          .join(', ')}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-[12px] leading-5 text-emerald-900">
+                    {inviteUserStatus.message} Review the details and region below, then send the
+                    invitation.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={clearExistingUser}
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-semibold text-gray-500 hover:bg-white hover:text-gray-700"
+                title="Clear the loaded details and enter someone else"
+              >
+                <X className="h-3.5 w-3.5" />
+                Not this person?
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {!checkingInviteUser && inviteUserStatus?.message && !(existingUser && inviteUserStatus?.canInvite) ? (
           <div
             role="status"
             className={clsx(
@@ -733,7 +918,11 @@ export default function InviteUserForm() {
             onClick={handleContinue}
             className="inline-flex items-center gap-2 rounded-xl bg-brand-primary px-5 py-3 text-[13px] font-semibold text-white shadow-sm transition hover:bg-brand-950 disabled:opacity-60"
           >
-            {loading ? 'Creating invitation...' : 'Send invitation'}
+            {loading
+              ? 'Creating invitation...'
+              : existingUser?.isFarmer && inviteUserStatus?.canInvite
+                ? 'Upgrade to staff & invite'
+                : 'Send invitation'}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

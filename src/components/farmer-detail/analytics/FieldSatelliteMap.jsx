@@ -13,11 +13,24 @@ import {
   toRing,
 } from '@/lib/farmAnalytics'
 
-const todayIso = () => new Date().toISOString().slice(0, 10)
+// Local calendar date (toISOString() is UTC and gives "yesterday" in India before ~05:30 IST).
+const toLocalIso = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+const todayIso = () => toLocalIso(new Date())
 const monthsAgoIso = (months) => {
   const d = new Date()
   d.setMonth(d.getMonth() - months)
-  return d.toISOString().slice(0, 10)
+  return toLocalIso(d)
+}
+
+// Prefer the most recent acquisition with usable (<= 60% cloud) imagery; fall back to the
+// clearest one. Radar (no cloud cover) keeps the latest date.
+const MAX_DEFAULT_CLOUD = 60
+function pickDefaultDate(dates) {
+  if (!dates.length) return ''
+  const usable = dates.find((d) => d.cloudCover == null || d.cloudCover <= MAX_DEFAULT_CLOUD)
+  if (usable) return usable.date
+  return [...dates].sort((a, b) => a.cloudCover - b.cloudCover)[0].date
 }
 
 function formatShortDate(iso) {
@@ -140,7 +153,7 @@ export default function FieldSatelliteMap({ field, heightClass = 'h-[360px] lg:h
   const dates = useMemo(() => datesQuery.data || [], [datesQuery.data])
   const activeDate = dates.some((d) => d.date === selectedDate)
     ? selectedDate
-    : dates[0]?.date || ''
+    : pickDefaultDate(dates)
 
   const imageQuery = useAsyncData(
     hasRing && activeDate ? `image:${fieldId}:${satellite}:${activeDate}:${index}` : null,
@@ -332,7 +345,13 @@ export default function FieldSatelliteMap({ field, heightClass = 'h-[360px] lg:h
             </button>
           ))}
         </div>
-        {imageQuery.error ? <p className="mt-1 text-sm text-red-600">{imageQuery.error}</p> : null}
+        {imageQuery.error ? (
+          <p className="mt-1 text-sm text-red-600">
+            {/no valid pixels/i.test(String(imageQuery.error))
+              ? 'This date is too cloudy for the field to be measured. Pick a clearer acquisition date.'
+              : imageQuery.error}
+          </p>
+        ) : null}
       </div>
     </div>
   )
